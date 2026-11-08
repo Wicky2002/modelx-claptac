@@ -194,29 +194,61 @@ class Comms(Agent):
     def _identifier(self, key: str) -> str:
         return "ATLAS-" + sha256(key.encode()).hexdigest()[:12]
 
+    async def preview_alert(self, params: dict) -> dict:
+        """Render the publication template without a send, write or model call."""
+        now = self.clock()
+        area, event, severity, texts, missing, infos = await self._render_alert(
+            params, now, translate=False
+        )
+        return {
+            "target_area": area,
+            "event": event,
+            "severity": severity,
+            "previewed_at": now.isoformat(),
+            "expires_at": infos[0].expires.isoformat(),
+            "expires_minutes": int(params.get("expires_minutes", 360)),
+            "texts": texts,
+            "missing": missing,
+            "excluded": [lang for lang in LANGUAGES if lang not in self._languages(params)],
+            "delivery_mode": "simulation_log"
+            if isinstance(self.channel, LogChannel)
+            else "channel_send",
+            "note": "Preview only. Expiry is estimated from this preview; actual expiry starts at publication. Missing free-text translations are not generated in preview.",
+        }
+
+    async def _render_alert(self, p, now, *, translate=True):
+        area = self._text(p, "area")
+        event_code = self._text(p, "event")
+        severity = p.get("severity", "Severe")
+        if severity not in SEVERITIES:
+            raise CommsError(f"severity must be one of {sorted(SEVERITIES)}")
+        languages = self._languages(p)
+        instruction_code = p.get("instruction", "evacuate")
+        free_instruction = p.get("instruction_text")
+        if instruction_code not in RESPONSE and not free_instruction:
+            raise CommsError(f"unknown instruction {instruction_code!r}")
+        texts, missing = await self._compose(
+            event_code,
+            area,
+            severity,
+            languages,
+            instruction_code,
+            free_instruction,
+            translate=translate,
+        )
+        if not texts:
+            raise CommsError("no language could be rendered")
+        infos = [
+            self._info(lang, t, event_code, severity, p, instruction_code, area, now)
+            for lang, t in texts.items()
+        ]
+        return area, event_code, severity, texts, missing, infos
+
     async def _publish_alert(self, action, p, now):
         key = action.idempotency_key
         alert_id = self._identifier(key)
         if self.get_alert(alert_id) is None:
-            area = self._text(p, "area")
-            event_code = self._text(p, "event")
-            severity = p.get("severity", "Severe")
-            if severity not in SEVERITIES:
-                raise CommsError(f"severity must be one of {sorted(SEVERITIES)}")
-            languages = self._languages(p)
-            instruction_code = p.get("instruction", "evacuate")
-            free_instruction = p.get("instruction_text")
-            if instruction_code not in RESPONSE and not free_instruction:
-                raise CommsError(f"unknown instruction {instruction_code!r}")
-            texts, missing = await self._compose(
-                event_code, area, severity, languages, instruction_code, free_instruction
-            )
-            if not texts:
-                raise CommsError("no language could be rendered")
-            infos = [
-                self._info(lang, t, event_code, severity, p, instruction_code, area, now)
-                for lang, t in texts.items()
-            ]
+            area, event_code, severity, texts, missing, infos = await self._render_alert(p, now)
             xml = build_cap_xml(
                 CapAlert(
                     identifier=alert_id,
@@ -337,21 +369,27 @@ class Comms(Agent):
                 )
         return delivered
 
-    async def _compose(self, event_code, area, severity, languages, instruction_code, free):
+    async def _compose(
+        self, event_code, area, severity, languages, instruction_code, free, *, translate=True
+    ):
         texts, missing = {}, []
         for lang in languages:
             event = self.phrases.event(event_code, lang)
             if event is None and lang == "en":
                 event = event_code
             elif event is None:
-                event = await self._translate(event_code, lang)
+                event = await self._translate(event_code, lang) if translate else None
             instruction = (
                 self.phrases.instruction(instruction_code, lang, event_code)
                 if free is None
                 else None
             )
             if free is not None:
-                instruction = free if lang == "en" else await self._translate(free, lang)
+                instruction = (
+                    free
+                    if lang == "en"
+                    else (await self._translate(free, lang) if translate else None)
+                )
             if event is None or instruction is None:
                 missing.append(lang)
                 continue

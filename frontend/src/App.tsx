@@ -16,6 +16,8 @@ import { IntelligencePage } from "./pages/Intelligence";
 import { LLMSettingsPage } from "./pages/LLMSettings";
 import { MetricsPage } from "./pages/Metrics";
 import { MissionsPage } from "./pages/Missions";
+import { IncidentsPage } from "./pages/Incidents";
+import "./pages/operations.css";
 import { OverviewPage } from "./pages/Overview";
 import { Playground } from "./pages/Playground";
 import { PracticePage } from "./pages/Practice";
@@ -31,6 +33,7 @@ interface Item { path: string; label: string; icon: string; title: string }
 // For the people running the response.
 const OPERATIONS: Item[] = [
   { path: "overview", label: "Overview", icon: "◉", title: "Situation now" },
+  { path: "incidents", label: "Incidents", icon: "△", title: "Incident assessment and response gaps" },
   { path: "map", label: "Map", icon: "⌖", title: "Situation map" },
   { path: "decisions", label: "Decisions", icon: "✓", title: "Decisions waiting for you" },
   { path: "alerts", label: "Alerts & reports", icon: "📢", title: "Public alerts and situation reports" },
@@ -102,6 +105,7 @@ export function App() {
 
   let body;
   if (page === "overview") body = <OverviewPage />;
+  else if (page === "incidents") body = <IncidentsPage key={parts[1]} id={parts[1]} />;
   else if (page === "map") body = <Suspense fallback={<div className="page muted">Loading the map…</div>}><MapPage /></Suspense>;
   else if (page === "decisions") body = <DecisionsPage />;
   else if (page === "alerts") body = <AlertsPage />;

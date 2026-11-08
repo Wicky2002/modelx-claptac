@@ -191,36 +191,33 @@ export async function api<T>(url: string, init?: RequestInit & { json?: unknown 
 
 /** Poll a GET endpoint. ``null`` url pauses. Keeps the last good data if a poll fails. */
 export function usePoll<T>(url: string | null, ms = 2000) {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const alive = useRef(true);
+  const [state, setState] = useState<{ url: string | null; data: T | null; error: string | null; loading: boolean; refreshedAt: number | null }>({ url, data: null, error: null, loading: true, refreshedAt: null });
+  const generation = useRef(0);
+  const sequence = useRef(0);
+  const activeUrl = useRef(url); activeUrl.current = url;
   const load = useCallback(async () => {
     if (!url) return;
+    const gen = generation.current, seq = ++sequence.current;
+    const current = () => gen === generation.current && seq === sequence.current && activeUrl.current === url;
     try {
       const next = await api<T>(url);
-      if (alive.current) {
-        setData(next);
-        setError(null);
-      }
+      if (current()) setState({ url, data: next, error: null, loading: false, refreshedAt: Date.now() });
     } catch (e) {
-      if (alive.current) setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      if (alive.current) setLoading(false);
+      if (current()) setState(previous => ({ url, data: previous.url === url ? previous.data : null, refreshedAt: previous.url === url ? previous.refreshedAt : null, loading: false, error: e instanceof Error ? e.message : String(e) }));
     }
   }, [url]);
   useEffect(() => {
-    alive.current = true;
-    setLoading(true);
-    load();
-    if (!url || ms <= 0) return () => void (alive.current = false);
-    const id = setInterval(load, ms);
-    return () => {
-      alive.current = false;
-      clearInterval(id);
+    ++generation.current;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const tick = async () => {
+      await load();
+      if (active && url && ms > 0) timer = setTimeout(tick, ms);
     };
+    void tick();
+    return () => { active = false; ++generation.current; clearTimeout(timer); };
   }, [url, ms, load]);
-  return { data, error, loading, reload: load };
+  return { data: state.url === url ? state.data : null, error: state.url === url ? state.error : null, loading: !!url && (state.url !== url || state.loading), refreshedAt: state.url === url ? state.refreshedAt : null, reload: load };
 }
 
 export function fmtMs(ms: number): string {

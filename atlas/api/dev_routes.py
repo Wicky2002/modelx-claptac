@@ -20,6 +20,23 @@ from atlas.manager.rbac import requires
 router = APIRouter(prefix="/dev")
 
 
+@router.get("/sources", dependencies=requires(rbac.RUN_READ))
+async def dev_sources(request: Request):
+    from atlas.dashboard.dev.operations import source_health
+
+    return source_health(runtime_of(request))
+
+
+@router.get("/operations/{incident_id}", dependencies=requires(rbac.RUN_READ))
+async def dev_operations(incident_id: str, request: Request):
+    from atlas.dashboard.dev.operations import incident_operations
+
+    item = incident_operations(request.app.state.system, incident_id)
+    if item is None:
+        raise HTTPException(404, "No commander assessment recorded for this incident")
+    return item
+
+
 def runtime_of(request: Request):
     return request.app.state.runtime
 

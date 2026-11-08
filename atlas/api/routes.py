@@ -17,6 +17,7 @@ from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, Field
 
 from atlas.agents.a8_dispatch import MissionError, MissionStatus
+from atlas.agents.a9_comms import CommsError
 from atlas.control.approvals import ApprovalError
 from atlas.control.models import ApprovalStatus
 from atlas.dashboard import build_map_html, render_dashboard, sensor_panel
@@ -145,6 +146,21 @@ async def list_approvals(request: Request, status: ApprovalStatus | None = None)
     control = control_of(request)
     items = control.approvals.list(status) if status else control.approvals.pending()
     return [i.model_dump(mode="json") for i in items]
+
+
+@router.get("/approvals/{approval_id}/preview", dependencies=requires(rbac.APPROVAL_READ))
+async def preview_approval(approval_id: str, request: Request):
+    control = control_of(request)
+    try:
+        approval = control.approvals.get(approval_id)
+    except ApprovalError as error:
+        raise HTTPException(404, str(error)) from error
+    if approval.action.get("action_type") != "publish_alert":
+        raise HTTPException(422, "This action is not a public alert proposal")
+    try:
+        return await control.comms.preview_alert(approval.action["params"])
+    except (CommsError, ValueError, TypeError, OverflowError) as error:
+        raise HTTPException(422, str(error)) from error
 
 
 async def _resolve(request, background, approval_id, call):
