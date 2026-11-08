@@ -5,7 +5,7 @@ import { InformationBadges, InformationDetail, type Information } from "../compo
 import { Json } from "../components/Json";
 import { missionStatus } from "../plain";
 import { distance, LAYERS, metres, percent, roadState, SYMBOL, targets, type Kind, type Layer, type MapData, type Point, type Target } from "./map/model";
-import { useScene } from "./map/useScene";
+import { ORBIT, useScene } from "./map/useScene";
 import "./map/command-map.css";
 
 const DEFAULT_LAYERS: Record<Layer, boolean> = { area: true, flood: true, road: true, route: true, shelter: true, team: true, gauge: true };
@@ -23,7 +23,6 @@ export function MapPage() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [pin, setPin] = useState<Point | null>(null);
   const [path, setPath] = useState<string[]>([]);
-  const [satellite, setSatellite] = useState(false);
   const [terrain, setTerrain] = useState(false);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<"nearby" | "details">("nearby");
@@ -37,7 +36,8 @@ export function MapPage() {
     if (key) setPath(old => [...old.filter(k => k !== key), key].slice(-4)); else setPath([]);
     if (key) setMobilePanel("intel");
   }
-  const scene = useScene(data, layers, selected, choose, satellite, terrain);
+  const scene = useScene(data, layers, selected, choose, terrain, fit);
+  const orbital = scene.view.zoom < 8;
   const anchor: Point = selected?.point ?? pin ?? [scene.view.lat, scene.view.lon];
   const nearby = useMemo(() => all.map(t => ({ ...t, distance: metres(anchor, t.point) })).sort((a, b) => a.distance - b.distance), [all, anchor[0], anchor[1]]);
   const hits = query.trim() ? all.filter(t => `${t.title} ${t.subtitle}`.toLowerCase().includes(query.toLowerCase())).slice(0, 8) : [];
@@ -48,8 +48,22 @@ export function MapPage() {
   const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
   function fit() {
     choose(null); const map = scene.map.current;
-    if (data && map) map.fitBounds(data.bounds.map(([lat, lon]) => [lon, lat]) as [[number, number], [number, number]], { padding: 100, duration: reduced() ? 0 : 1100, bearing: 0 });
+    setMobilePanel(null);
+    const padding = map && map.getContainer().clientWidth > 1050 ? { left: 310, right: 370, top: 140, bottom: 130 } : { left: 45, right: 45, top: 175, bottom: 120 };
+    if (data && map) { map.stop(); map.fitBounds(data.bounds.map(([lat, lon]) => [lon, lat]) as [[number, number], [number, number]], { padding, maxZoom: 15, duration: reduced() ? 0 : 1600, bearing: 0 }); }
   }
+  function orbit() {
+    choose(null); setTerrain(false); setMobilePanel(null);
+    // Schedule after terrain is flattened so its effect cannot cancel the flight.
+    setOrbitalFlight(true);
+  }
+  const [orbitalFlight, setOrbitalFlight] = useState(false);
+  useEffect(() => {
+    if (!orbitalFlight || !scene.ready) return;
+    scene.map.current?.stop();
+    scene.map.current?.flyTo({ ...ORBIT, duration: reduced() ? 0 : 2200 });
+    setOrbitalFlight(false);
+  }, [orbitalFlight, scene.ready]);
   async function share() {
     const map = scene.map.current; if (!map) return;
     const c = map.getCenter();
@@ -70,7 +84,7 @@ export function MapPage() {
     <span className={`asset-icon icon-${t.kind}`}>{SYMBOL[t.kind]}</span><span className="asset-text"><b>{t.title}</b><small>{t.subtitle}</small></span><span className="asset-distance">{trailing ?? "↗"}</span>
   </button>;
 
-  return <div className="command-map" aria-label="Situation map command view">
+  return <div className={`command-map ${orbital ? "is-orbital" : "is-local"}`} aria-label="Situation map command view">
     <div ref={scene.container} className="scene-canvas" />
     <div className="scene-vignette" aria-hidden="true" />
     <div className="scene-grid" aria-hidden="true" />
@@ -118,11 +132,10 @@ export function MapPage() {
     <div className="map-reticle" aria-hidden="true"><span /><small>AREA OF OPERATIONS</small></div>
     {(error || scene.sceneError || scene.tileError) && <div className="scene-warning" role="status">{error ? `Updates unavailable. Displaying last received data. ${error}` : scene.sceneError ?? "Some basemap tiles are unavailable. Operational overlays remain visible."}</div>}
     <div className="camera-dock" aria-label="Map camera controls">
-      <button onClick={fit} title="Fit the whole area">⌗ <span>Fit area</span></button>
+      <button onClick={orbit} aria-pressed={orbital} disabled={!scene.ready}>◎ Globe</button>
+      <button onClick={fit} disabled={!data || !scene.ready} aria-label={`Zoom to ${data?.site ?? "operating area"}`} title="Zoom to the operating area">⌖ {data?.site ?? "Operating area"}</button>
       <button onClick={() => scene.map.current?.easeTo({ bearing: 0, duration: reduced() ? 0 : 800 })} title="Point the camera north">↑ <span>North</span></button>
-      <i />
-      <button aria-pressed={!satellite} onClick={() => setSatellite(false)}>Tactical</button><button aria-pressed={satellite} onClick={() => setSatellite(true)}>Satellite</button>
-      <i /><button aria-pressed={terrain} onClick={() => setTerrain(!terrain)}>{terrain ? "◈ 3D terrain" : "◇ 2D view"}</button>
+      <i /><button aria-pressed={terrain} disabled={orbital || !scene.ready} title={orbital ? "Enter the operating area to tilt the terrain" : "Tilt the local map and show elevation"} onClick={() => setTerrain(!terrain)}>{terrain ? "◈ 3D terrain" : "◇ Tilt terrain"}</button>
       <button onClick={() => void share()}>{copied ? "✓ Copied" : "↗ Share"}</button>
     </div>
     {shareError && <div className="share-note" role="status">{shareError}</div>}
