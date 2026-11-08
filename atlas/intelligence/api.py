@@ -39,7 +39,15 @@ async def evidence(ref: str, request: Request):
     item = request.app.state.system.intelligence.evidence(ref)
     if item is None:
         raise HTTPException(404, "Unknown evidence reference")
-    return item
+    from atlas.dashboard.dev.information import Information
+
+    info = Information(request.app.state.runtime)
+    refs = item.get("provenance", [])
+    observed = bool(refs) and all(r in info.evidence for r in refs)
+    return {**item, "information": info.describe(
+        "observed" if observed else "inferred", refs=refs, at=item.get("observed_at"),
+        note="Recorded snapshot. A supported claim is not independent confirmation of conditions.",
+    )}
 
 
 @router.post("/ask", dependencies=requires(RUN_READ))

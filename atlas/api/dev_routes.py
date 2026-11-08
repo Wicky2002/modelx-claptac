@@ -136,6 +136,26 @@ async def dev_map(request: Request):
     return situation_map(request.app.state.system)
 
 
+@router.get("/context", dependencies=requires(rbac.RUN_READ))
+async def dev_context(request: Request):
+    return request.app.state.replay.status()
+
+
+@router.get("/evidence/{evidence_id}", dependencies=requires(rbac.TRACE_READ))
+async def dev_evidence(evidence_id: str, request: Request):
+    from atlas.dashboard.dev.information import Information
+
+    info = Information(runtime_of(request))
+    evidence = info.evidence.get(evidence_id)
+    if evidence is None:
+        raise HTTPException(404, "unknown observation evidence")
+    return {
+        "id": evidence_id,
+        **evidence,
+        "information": info.describe("observed", refs=[evidence_id]),
+    }
+
+
 @router.get("/history", dependencies=requires(rbac.RUN_READ))
 async def dev_history(hazard: str | None = None):
     """The committed hazard history (real events, with sources) for the timeline."""

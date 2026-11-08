@@ -273,9 +273,14 @@ async def complete(mission_id: str, request: Request):
 
 @router.get("/alerts", dependencies=requires(rbac.ALERT_READ))
 async def list_alerts(request: Request, incident_id: str | None = None):
+    from atlas.agents.a9_comms import LogChannel
+
+    comms = control_of(request).comms
     return [
-        {k: v for k, v in a.items() if k != "cap_xml"}
-        for a in control_of(request).comms.list_alerts(incident_id)
+        {**{k: v for k, v in a.items() if k != "cap_xml"},
+         "delivery_mode": "simulation_log" if isinstance(comms.channel, LogChannel) else "channel_send",
+         "recipient_acknowledgement": None}
+        for a in comms.list_alerts(incident_id)
     ]
 
 

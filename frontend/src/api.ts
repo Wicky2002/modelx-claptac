@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 // ---- types mirror the Python models in atlas/dashboard/dev ---------------------------------
 
+import type { Information } from "./components/Information";
+
 export interface Span {
   id: string;
   parent_id: string | null;
@@ -42,13 +44,14 @@ export interface SpanDetail {
   id: string;
   agent: string;
   kind: string;
-  input: { id: string; type: string; source: string; incident_id: string | null; created_at: string; summary: string; payload: unknown };
-  outputs: { id: string; type: string; source: string; summary: string; payload: unknown; seq: number }[];
+  input: { information?: Information; id: string; type: string; source: string; incident_id: string | null; created_at: string; summary: string; payload: unknown };
+  outputs: { information?: Information; id: string; type: string; source: string; summary: string; payload: unknown; seq: number }[];
   caused_by: { event_id: string; by: string } | null;
   metadata: { duration_ms: number; started_at: number | null; ok: boolean; error: string | null; chain: string[] };
 }
 
 export interface TraceEvent {
+  information?: Information;
   seq: number;
   id: string;
   type: string;

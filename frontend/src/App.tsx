@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { ReplayBanner } from "./components/Information";
 import { token, usePoll, type Approval } from "./api";
 import { AgentsPage } from "./pages/Agents";
 import { AlertsPage } from "./pages/Alerts";
@@ -154,6 +155,7 @@ export function App() {
         </div>
       </nav>
       <div className="main">
+        <ReplayBanner />
         {item && page !== "map" && <div className="topbar"><h1>{item.title}</h1>{isTech && <span className="chip">technical</span>}</div>}
         {body}
       </div>

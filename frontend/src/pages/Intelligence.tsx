@@ -1,3 +1,4 @@
+import { EvidenceInformation } from "../components/Information";
 import { useEffect, useRef, useState } from "react";
 import { api, token, usePoll } from "../api";
 import { Json } from "../components/Json";
@@ -61,6 +62,6 @@ export function IntelligencePage() {
       {a.recommend_replan && <p>Model suggests reviewing the plan. No action has been changed.</p>}
       <details><summary>Decision and validation trace</summary><ol>{a.trace.steps.map((s, i) => <li key={i}><strong>{s.kind}</strong>: {s.text}{s.refs.map(ref => <button key={ref} className="btn" disabled={busy} onClick={() => run(async () => setEvidence(await api(`/intelligence/evidence/${encodeURIComponent(ref)}`)))}>View snapshot</button>)}</li>)}</ol></details>
     </section>)}
-    {evidence != null && <dialog ref={evidenceDialog} aria-label="Evidence snapshot" onCancel={() => setEvidence(null)} style={{padding: 24, width: "min(800px, 90vw)", maxHeight: "85vh", overflow: "auto", background: "#151a28", color: "#e6e9ef", border: "1px solid #343c50", borderRadius: 12}}><h2>Evidence snapshot</h2><Json value={evidence} /><button className="btn" onClick={() => setEvidence(null)}>Close evidence</button></dialog>}
+    {evidence != null && <dialog ref={evidenceDialog} aria-label="Evidence snapshot" onCancel={() => setEvidence(null)} style={{padding: 24, width: "min(800px, 90vw)", maxHeight: "85vh", overflow: "auto", background: "#151a28", color: "#e6e9ef", border: "1px solid #343c50", borderRadius: 12}}><h2>Evidence snapshot</h2><EvidenceInformation value={evidence} /><Json value={evidence} /><button className="btn" onClick={() => setEvidence(null)}>Close evidence</button></dialog>}
   </div>;
 }

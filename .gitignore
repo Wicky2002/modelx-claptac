@@ -30,3 +30,7 @@ hardware/lora/gateway/config.yaml
 hardware/lora/node/config.yaml
 *.db-shm
 *.db-wal
+
+# Browser verification output (review screenshots live in docs/screenshots).
+frontend/test-results/
+frontend/playwright-report/

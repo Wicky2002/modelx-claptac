@@ -45,7 +45,7 @@ export function DecisionsPage() {
 
   return (
     <div className="page ops">
-      <p className="lead">ATLAS acts on its own for routine work. Anything that reaches the public or commits many teams waits here until a person says yes. Your name and decision are kept in a record that cannot be changed.</p>
+      <p className="lead">ATLAS acts on its own for routine work. High-consequence actions wait here for human approval; lower-consequence actions can be authorised by policy. Your name and decision are kept in a record that cannot be changed.</p>
       <label className="f" style={{ maxWidth: 320, marginBottom: 12 }}>Your name<input value={who} onChange={(e) => setWho(e.target.value)} placeholder="e.g. District Officer Perera" /></label>
       {msg && <div className="banner warn" style={{ marginBottom: 12 }}>{msg}</div>}
 
@@ -53,9 +53,10 @@ export function DecisionsPage() {
       {pending.data?.map((a) => (
         <div key={a.id} className="card decision">
           <div className="muted sm">{place(a.incident_id)} · asked {ago(a.created_at)}</div>
+          <span className="chip warn">Proposed action · awaiting approval</span>
           <div className="decision-what">{describeAction(a.action)}</div>
           <div className="decision-why"><b>Why ATLAS suggests it:</b> {a.action.rationale ? readable(a.action.rationale) : "Part of the current response plan."}</div>
-          <div className="decision-why"><b>Why it needs you:</b> {whyHuman(a.action)}</div>
+          <div className="decision-why"><b>Why it needs you:</b> {a.reason || whyHuman(a.action)}</div>
           <input placeholder="Optional note (kept with your decision)" value={note[a.id] ?? ""} onChange={(e) => setNote({ ...note, [a.id]: e.target.value })} style={{ width: "100%", margin: "8px 0" }} />
           <div className="row">
             <button className="btn primary big" disabled={busy !== null} onClick={() => decide(a, "approve")}>✓ Approve</button>
@@ -76,7 +77,7 @@ export function DecisionsPage() {
 
       {history.length > 0 && (
         <div className="card" style={{ marginTop: 14 }}>
-          <h2>Recent decisions</h2>
+          <h2>Recent decisions</h2><p className="muted sm">Approval grants permission. Check mission and alert records for execution and acknowledgements.</p>
           <table className="t">
             <tbody>
               {history.map((a) => (

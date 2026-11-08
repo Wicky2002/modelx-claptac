@@ -9,6 +9,7 @@ this works with no internet.
 
 from __future__ import annotations
 
+import json
 import re
 from typing import Any
 
@@ -26,9 +27,13 @@ def situation_map(system) -> dict[str, Any]:
     runtime = system.runtime
     rg = system.routing.road_graph
     now = runtime.clock()
+    from atlas.dashboard.dev.information import Information, stamp
+
+    information = Information(runtime)
     beliefs: dict[str, dict] = {}
     closed_hard: set[str] = set()
-    for b in runtime.cop.snapshot(now=now)["beliefs"]:
+    for row in runtime.db.connection.execute("SELECT body FROM beliefs"):
+        b = json.loads(row[0])
         if b["subject"].startswith("edge:"):
             edge = b["subject"][5:]
             if b["attribute"] == "belief_open":
@@ -50,6 +55,14 @@ def situation_map(system) -> dict[str, Any]:
                 "belief_open": round(b["value"], 3) if b else None,
                 "confidence": round(b["confidence"], 3) if b else None,
                 "closed_by_decision": eid in closed_hard,
+                "information": information.describe(
+                    "inferred",
+                    refs=b["provenance"] if b else [],
+                    at=b["updated_at"] if b else None,
+                    note="Road passability inferred from area readings; not a field inspection."
+                    if b
+                    else "No evidence of current passability. Road geometry is reference data.",
+                ),
             }
         )
     lats = [n["lat"] for _, n in rg.graph.nodes(data=True)]
@@ -72,6 +85,15 @@ def situation_map(system) -> dict[str, Any]:
                     "people": _people(mission),
                     "destination": friendly(mission.destination) if mission.destination else None,
                     "progress": mission.progress,
+                    "incident_id": mission.incident_id,
+                    "destination_id": mission.destination,
+                    "acknowledged_at": mission.acknowledged_at.isoformat()
+                    if mission.acknowledged_at
+                    else None,
+                    "information": information.describe(
+                        "inferred",
+                        note="Planned path on an issued mission ticket; not a tracked journey.",
+                    ),
                 }
             )
     missions = system.control.dispatch.list()
@@ -100,6 +122,11 @@ def situation_map(system) -> dict[str, Any]:
                 "expected": expected,  # people on missions heading there now
                 "elevation_m": getattr(sh, "elevation_m", None),
                 "kind": getattr(sh, "kind", None),
+                "information": information.describe(
+                    "inferred",
+                    synthetic=True,
+                    note="Shelter capacity is synthetic reference data. Expected arrivals are mission totals, not observed occupancy.",
+                ),
             }
         )
     teams = []
@@ -123,13 +150,17 @@ def situation_map(system) -> dict[str, Any]:
                         "lat": n["lat"],
                         "lon": n["lon"],
                         "busy": r.id in busy,
+                        "information": information.describe(
+                            "inferred",
+                            synthetic=True,
+                            note="Synthetic fleet; position is its base, not live tracking.",
+                        ),
                     }
                 )
     except Exception:  # a map without teams is still a map
         pass
     areas = []
     try:
-        import json
         from pathlib import Path
 
         ref = (
@@ -156,6 +187,17 @@ def situation_map(system) -> dict[str, Any]:
                     "vulnerable": round(a.get("population", 0) * a.get("vulnerable_fraction", 0)),
                     "level": inc.get("level") if inc else None,  # watch / warning / emergency
                     "incident_id": inc.get("incident_id") if inc else None,
+                    "information": information.describe(
+                        "inferred",
+                        synthetic=True,
+                        refs=[
+                            ref
+                            for b in snapshot["beliefs"]
+                            if b["subject"] == "area:" + a["area_id"]
+                            for ref in b["provenance"]
+                        ],
+                        note="Population is synthetic. Circle is an approximate area of concern, not measured flood extent.",
+                    ),
                 }
             )
     except Exception:
@@ -175,6 +217,21 @@ def situation_map(system) -> dict[str, Any]:
                         "threshold": s.get("threshold"),
                         "lat": s["location"]["lat"],
                         "lon": s["location"]["lon"],
+                        "information": information.describe(
+                            "observed",
+                            refs=[
+                                ref
+                                for ref, e in information.evidence.items()
+                                if e.get("payload", {}).get("node_id") == s["node_id"]
+                                and e.get("payload", {}).get("type") == s["sensor_type"]
+                                and e.get("payload", {}).get("timestamp")
+                                and abs(
+                                    stamp(e["payload"]["timestamp"]).timestamp() - s["observed_at"]
+                                )
+                                < 0.001
+                            ],
+                            at=s["observed_at"],
+                        ),
                     }
                 )
     except Exception:  # a map without gauges is still a map

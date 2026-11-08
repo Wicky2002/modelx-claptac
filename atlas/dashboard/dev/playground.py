@@ -18,7 +18,7 @@ import asyncio
 import json
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -104,10 +104,35 @@ class LiveReplay:
     def __init__(self, runtime):
         self.runtime = runtime
         self.task: asyncio.Task | None = None
-        self.state: dict[str, Any] = {"state": "idle"}
+        runtime.db.connection.execute(
+            "CREATE TABLE IF NOT EXISTS console_replay (id INTEGER PRIMARY KEY, body TEXT)"
+        )
+        row = runtime.db.connection.execute("SELECT body FROM console_replay WHERE id=1").fetchone()
+        self.state: dict[str, Any] = json.loads(row[0]) if row else {"state": "idle"}
+        if self.state["state"] == "running":
+            self.state["state"] = "interrupted"
+            self._save()
+
+    def _save(self):
+        self.runtime.db.connection.execute(
+            "INSERT OR REPLACE INTO console_replay VALUES (1,?)", (json.dumps(self.state),)
+        )
 
     def status(self) -> dict[str, Any]:
-        return dict(self.state)
+        state = dict(self.state)
+        elapsed = state.get("elapsed_seconds", 0)
+        if state["state"] == "running":
+            elapsed = min(
+                state["duration_seconds"], max(0, time.time() - state["started"]) * state["speed"]
+            )
+        state["elapsed_seconds"] = elapsed
+        if state.get("real_start"):
+            start = datetime.fromisoformat(state["real_start"])
+            state["simulated_at"] = (
+                start + timedelta(seconds=elapsed * state.get("time_scale", 1))
+            ).isoformat()
+        state["contains_replay"] = bool(state.get("scenario"))
+        return state
 
     def start(self, key: str, speed: float = 1.0) -> dict[str, Any]:
         if self.task and not self.task.done():
@@ -124,14 +149,24 @@ class LiveReplay:
             "total": len(events),
             "started": time.time(),
             "error": None,
+            "title": scenario.get("title", key),
+            "synthetic": not bool(scenario.get("real")),
+            "duration_seconds": max((e["at_seconds"] for e in events), default=0),
+            "elapsed_seconds": 0,
+            "real_start": scenario.get("real_start"),
+            "time_scale": scenario.get("speedup", 1),
+            "assumptions": scenario.get("assumptions", []),
         }
+        self._save()
         self.task = asyncio.get_running_loop().create_task(self._run(events, speed))
         return self.status()
 
     def stop(self) -> dict[str, Any]:
         if self.task and not self.task.done():
+            self.state["elapsed_seconds"] = self.status()["elapsed_seconds"]
             self.task.cancel()
             self.state["state"] = "stopped"
+            self._save()
         return self.status()
 
     async def _run(self, events: list[dict], speed: float) -> None:
@@ -141,10 +176,17 @@ class LiveReplay:
                 wait = max(0.0, (entry["at_seconds"] - previous) / speed)
                 previous = entry["at_seconds"]
                 await asyncio.sleep(wait)
-                await self.runtime.bus.publish(
-                    _event_for(entry["payload"], datetime.now(timezone.utc), index)
-                )
+                event = _event_for(entry["payload"], datetime.now(timezone.utc), index)
+                event.payload["_replay"] = {
+                    "scenario": self.state["scenario"],
+                    "synthetic": self.state["synthetic"],
+                    "at_seconds": entry["at_seconds"],
+                    "original_timestamp": entry["payload"].get("timestamp"),
+                }
+                await self.runtime.bus.publish(event)
                 self.state["sent"] = index + 1
+                self.state["elapsed_seconds"] = entry["at_seconds"]
+                self._save()
             self.state["state"] = "finished"
         except asyncio.CancelledError:
             self.state["state"] = "stopped"
@@ -152,6 +194,8 @@ class LiveReplay:
         except Exception as exc:  # report it in the status; do not take the API down
             log.exception("live replay failed")
             self.state.update(state="error", error=f"{type(exc).__name__}: {exc}")
+        finally:
+            self._save()
 
 
 async def inject_reading(runtime, reading: SensorReading) -> str:
