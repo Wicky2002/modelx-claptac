@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { fmtMs, usePoll, type Span, type SpanDetail } from "../api";
+import { InformationDetail } from "./Information";
 import { Copy, Json } from "./Json";
 
 type Tab = "input" | "output" | "metadata" | "chain";
@@ -45,6 +46,7 @@ export function Inspector({ span, onSelectEvent }: { span: Span | null; onSelect
               <dt>time</dt><dd>{data.input.created_at}</dd>
               <dt>event id</dt><dd className="mono sm">{data.input.id}</dd>
             </dl>
+            <InformationDetail info={data.input.information} />
             <Json value={data.input.payload} />
           </>
         )}
@@ -56,6 +58,7 @@ export function Inspector({ span, onSelectEvent }: { span: Span | null; onSelect
                   <span className="chip acc">{o.type}</span>
                   <a onClick={() => onSelectEvent?.(o.id)}>{o.summary}</a>
                 </div>
+                <InformationDetail info={o.information} />
                 <Json value={o.payload} max={200} />
               </div>
             ))

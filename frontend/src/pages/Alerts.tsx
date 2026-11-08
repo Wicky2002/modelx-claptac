@@ -14,7 +14,7 @@ export function AlertsPage() {
 
   return (
     <div className="page ops">
-      <p className="lead">Public alerts that went out, and the situation reports ATLAS writes for the operations room. Alerts only go out after a person approves them.</p>
+      <p className="lead">Published alert records and situation reports. High-consequence alerts require human approval; routine alerts may be authorised by policy. A successful channel send does not prove anyone received the message.</p>
       <div className="seg" style={{ marginBottom: 12 }}>
         {["en", "si", "ta"].map((l) => <button key={l} className={lang === l ? "on" : ""} onClick={() => setLang(l)}>{languageName(l)}</button>)}
       </div>
@@ -22,7 +22,7 @@ export function AlertsPage() {
       <div className="grid g2">
         <div>
           <h3 className="sec">Public alerts · {list.length}</h3>
-          {list.length === 0 && <div className="card muted">No alert has been sent. When ATLAS wants to warn the public, it asks you first under Decisions.</div>}
+          {list.length === 0 && <div className="card muted">No alert has been sent. High-consequence proposals appear under Decisions.</div>}
           {list.map((a) => {
             const t = a.texts[lang] ?? a.texts.en;
             return (
@@ -31,6 +31,7 @@ export function AlertsPage() {
                   <span className={`chip ${a.status === "active" ? "bad" : ""}`}>{a.status === "active" ? "Active" : a.status}</span>
                   <span className="muted sm">{a.severity} · {place(a.incident_id)}</span>
                 </div>
+                <p className="sm"><b>{a.delivery_mode === "simulation_log" ? "Simulation log (no public delivery)" : "Languages accepted by channel"}:</b> {a.delivered?.join(", ") || "No successful channel recorded"}{a.missing?.length ? ` · pending: ${a.missing.join(", ")}` : ""}</p><p className="sm muted">Recipient acknowledgement: not available{a.delivery_mode === "simulation_log" ? " · log channel is a local simulation" : ""}.</p>
                 <div className="alert-head">{t?.headline}</div>
                 <p>{t?.body}</p>
                 <p><b>{t?.instruction}</b></p>

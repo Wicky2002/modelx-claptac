@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import maplibregl, { type GeoJSONSource, type LngLatBoundsLike, type Map as MLMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { InformationBadges, InformationDetail, type Information } from "../components/Information";
 import { usePoll } from "../api";
 import { missionStatus, readable } from "../plain";
 
@@ -12,12 +13,12 @@ import { missionStatus, readable } from "../plain";
  * along an evacuation route. All sources are keyless; if the internet is down the ATLAS layers still draw.
  */
 
-interface Area { id: string; name: string; lat: number; lon: number; population: number | null; vulnerable: number; level: string | null; incident_id: string | null }
-interface Team { id: string; name: string; kind: string; lat: number; lon: number; busy: boolean }
-interface Shelter { id: string; name?: string; lat: number; lon: number; capacity: number; occupancy?: number | null; expected?: number; elevation_m?: number | null }
-interface Gauge { node: string; type: string; value: number; unit: string; threshold: number | null; lat: number; lon: number }
-interface Route { mission_id: string; title: string; status: string; points: [number, number][]; team?: string; people?: number; destination?: string | null; progress?: number }
-interface Edge { id: string; from: [number, number]; to: [number, number]; belief_open: number | null; confidence: number | null; closed_by_decision: boolean }
+interface Area { information?: Information; id: string; name: string; lat: number; lon: number; population: number | null; vulnerable: number; level: string | null; incident_id: string | null }
+interface Team { information?: Information; id: string; name: string; kind: string; lat: number; lon: number; busy: boolean }
+interface Shelter { information?: Information; id: string; name?: string; lat: number; lon: number; capacity: number; occupancy?: number | null; expected?: number; elevation_m?: number | null }
+interface Gauge { information?: Information; node: string; type: string; value: number; unit: string; threshold: number | null; lat: number; lon: number }
+interface Route { information?: Information; mission_id: string; title: string; status: string; points: [number, number][]; team?: string; people?: number; destination?: string | null; progress?: number }
+interface Edge { information?: Information; id: string; from: [number, number]; to: [number, number]; belief_open: number | null; confidence: number | null; closed_by_decision: boolean }
 interface MapData {
   site: string;
   bounds: [[number, number], [number, number]];
@@ -266,7 +267,12 @@ export function MapPage() {
       m.setLngLat([lon, lat]).setOffset(offset);
       const el = m.getElement();
       el.className = `mk ${cls}`;
-      if (el.innerHTML !== html) el.innerHTML = html;
+      const info = key.startsWith("station:") ? stations.find(s => `station:${s.key}` === key)?.gauges[0]?.information
+        : key.startsWith("area:") ? data.areas?.find(a => `area:${a.id}` === key)?.information
+        : key.startsWith("shelter:") ? data.shelters.find(s => `shelter:${s.id}` === key)?.information
+        : data.teams?.find(t => `team:${t.id}` === key)?.information;
+      const badge = `<span class="mk-status">${(info?.labels ?? ["unknown"]).join(" · ")}</span>`;
+      if (el.innerHTML !== html + badge) el.innerHTML = html + badge;
       onClickRef.current.set(key, onClick);
     };
     for (const a of data.areas ?? []) {
@@ -509,9 +515,9 @@ export function MapPage() {
             </div>
           )}
           <div className="hud-row"><span>Roads probably closed</span><b>{data?.likely_closed ?? "—"}</b></div>
-          <div className="hud-row"><span>People being moved</span><b>{moving}</b></div>
+          <div className="hud-row"><span>People assigned to missions</span><b>{moving}</b></div>
           <div className="hud-row"><span>Missions under way</span><b>{data?.routes.length ?? "—"}</b></div>
-          {liveAlert && <div className="hud-alert">Public alert out: {liveAlert.texts?.en?.headline ?? `${liveAlert.event} · ${liveAlert.area}`}</div>}
+          {liveAlert && <div className="hud-alert">Alert record: {liveAlert.texts?.en?.headline ?? `${liveAlert.event} · ${liveAlert.area}`}</div>}
           {(approvals.data?.length ?? 0) > 0 && <a className="hud-decide" href="#/decisions">{approvals.data!.length} decision{approvals.data!.length > 1 ? "s" : ""} waiting for you →</a>}
         </div>
 
@@ -558,7 +564,7 @@ export function MapPage() {
             <div><i className="sw" style={{ background: "#d97706" }} /> Road uncertain</div>
             <div><i className="sw" style={{ background: "#dc2626" }} /> Road probably closed</div>
             <div><i className="sw" style={{ background: "#94a3b8" }} /> No reports about this road yet</div>
-            <div><i className="sw" style={{ background: "#2563eb" }} /> Evacuation route (moving)</div>
+            <div><i className="sw" style={{ background: "#2563eb" }} /> Mission route (planned path)</div>
             <div className="muted sm">Fainter means less sure. ⌂ shelter · 🚐 ⛑ team · 〰 sensor · ⚠ affected area</div>
           </div>
         ) : (
@@ -583,11 +589,11 @@ function Details({ sel, close, fly }: { sel: Selected; close: () => void; fly: (
   } else if (sel.kind === "shelter") {
     const s = sel.item;
     title = s.name ?? s.id;
-    const free = s.capacity - (s.occupancy ?? 0) - (s.expected ?? 0);
+    const free = s.occupancy == null ? null : s.capacity - s.occupancy - (s.expected ?? 0);
     body = (
       <>
         <p>Room for <b>{s.capacity}</b> people. <b>{s.expected ?? 0}</b> are on their way now.</p>
-        <p>{s.occupancy != null ? <>Recorded inside: <b>{s.occupancy}</b>.</> : "Nobody has reported how many are inside yet."} Space left after arrivals: <b>{free}</b>.</p>
+        <p>{s.occupancy != null ? <>Recorded inside: <b>{s.occupancy}</b>.</> : "Nobody has reported how many are inside yet."} Space left after arrivals: <b>{free ?? "unknown until occupancy is reported"}</b>.</p>
         {s.elevation_m != null && <p className="muted">{Math.round(s.elevation_m)} m above sea level.</p>}
       </>
     );
@@ -602,7 +608,7 @@ function Details({ sel, close, fly }: { sel: Selected; close: () => void; fly: (
         <tbody>
           {sel.item.gauges.map((g) => (
             <tr key={g.node + g.type}>
-              <td>{SENSOR_NAME[g.type] ?? g.type}</td>
+              <td>{SENSOR_NAME[g.type] ?? g.type}<InformationBadges info={g.information} /></td>
               <td><b>{g.value.toFixed(1)} {g.unit}</b></td>
               <td>{g.threshold != null && (g.value >= g.threshold ? <span className="chip bad">above danger line ({g.threshold})</span> : <span className="chip ok">below danger line ({g.threshold})</span>)}</td>
             </tr>
@@ -625,7 +631,7 @@ function Details({ sel, close, fly }: { sel: Selected; close: () => void; fly: (
     title = "Road";
     body = e.belief_open === null && !e.closed_by_decision
       ? <p>No sensor or field report has mentioned this road yet, so ATLAS assumes it is usable, with low confidence.</p>
-      : <p><b style={{ color: s.colour }}>{s.text}</b>: {pct(e.belief_open)} likely to be passable. How sure: {pct(e.confidence)}{e.closed_by_decision ? ". A person closed it." : "."}</p>;
+      : <p><b style={{ color: s.colour }}>{s.text}</b>: {pct(e.belief_open)} likely to be passable. How sure: {pct(e.confidence)}{e.closed_by_decision ? ". A closure action was recorded." : "."}</p>;
   }
   return (
     <div className="details">
@@ -633,6 +639,7 @@ function Details({ sel, close, fly }: { sel: Selected; close: () => void; fly: (
         <b style={{ fontSize: 16 }}>{title}</b>
         <button className="tb" onClick={close} aria-label="Close">✕</button>
       </div>
+      <InformationDetail info={sel.kind === "station" ? sel.item.gauges[0]?.information : sel.item.information} />
       {body}
     </div>
   );

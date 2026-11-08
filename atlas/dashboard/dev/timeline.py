@@ -18,6 +18,9 @@ def category(kind):
 
 
 def enrich(runtime, events):
+    from atlas.dashboard.dev.information import Information
+
+    information = Information(runtime)
     activity = {}
     ids = [e["id"] for e in events]
     for offset in range(0, len(ids), 400):
@@ -40,7 +43,12 @@ def enrich(runtime, events):
                 }
             )
     return [
-        {**e, "category": category(e["type"]), "activity": activity.get(e["id"], [])}
+        {
+            **e,
+            "category": category(e["type"]),
+            "activity": activity.get(e["id"], []),
+            "information": information.event(e),
+        }
         for e in events
     ]
 

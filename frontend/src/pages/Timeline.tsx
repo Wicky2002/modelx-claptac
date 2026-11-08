@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, fmtMs, shortAgent, usePoll, type TraceEvent } from "../api";
+import { EvidenceInformation, InformationBadges, InformationDetail } from "../components/Information";
 import { Json } from "../components/Json";
 import "./timeline.css";
 
@@ -64,8 +65,8 @@ function EventDetails({entry, onSelect, basePath, evidencePath}: {entry: Entry; 
     ? entry.payload as unknown as Advice : null;
   return <aside className="tl-inspector" aria-label="Event details">
     <div className="tl-inspector-head"><span className={`chip tl-${entry.category}`}>{entry.type.replace(/_/g, " ")}</span>
-      <h2>{title(entry)}</h2><p className="muted">{name(entry.source)} · ledger #{entry.seq}</p></div>
-    <section><h3>Event input</h3><dl className="kv"><dt>Event time</dt><dd>{new Date(entry.created_at).toLocaleString()}</dd><dt>Incident</dt><dd>{entry.incident_id ?? "Before incident assignment / standalone input"}</dd><dt>Source</dt><dd>{entry.raw_source}</dd></dl>
+      <InformationBadges info={entry.information} /><h2>{title(entry)}</h2><p className="muted">{name(entry.source)} · ledger #{entry.seq}</p></div>
+    <section><InformationDetail info={entry.information} /><h3>Event input</h3><dl className="kv"><dt>Event time</dt><dd>{new Date(entry.created_at).toLocaleString()}</dd><dt>Incident</dt><dd>{entry.incident_id ?? "Before incident assignment / standalone input"}</dd><dt>Source</dt><dd>{entry.raw_source}</dd></dl>
       {entry.caused_by && <button className="btn" onClick={() => onSelect(entry.caused_by!)}>← Inspect causing event</button>}
       <details><summary>Full event payload</summary><Json value={entry.payload} /></details>
     </section>
@@ -107,7 +108,7 @@ function EventDetails({entry, onSelect, basePath, evidencePath}: {entry: Entry; 
         {!chain.ancestors.length && !chain.descendants.length && <p className="muted">No causal links recorded.</p>}</>}
     </section>
     {error && <p className="err" role="alert">{error}</p>}
-    {evidence && <section aria-live="polite"><h3>{evidence.title}</h3><Json value={evidence.value} /><button className="btn" onClick={() => setEvidence(null)}>Close detail</button></section>}
+    {evidence && <section aria-live="polite"><h3>{evidence.title}</h3><EvidenceInformation value={evidence.value} /><Json value={evidence.value} /><button className="btn" onClick={() => setEvidence(null)}>Close detail</button></section>}
   </aside>;
 }
 

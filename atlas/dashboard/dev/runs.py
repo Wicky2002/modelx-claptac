@@ -261,6 +261,9 @@ def _order(spans: list[Span]) -> list[Span]:
 
 def span_detail(runtime, span_id: str) -> dict[str, Any] | None:
     """The input event, the events this span produced, and its cause."""
+    from atlas.dashboard.dev.information import Information
+
+    information = Information(runtime)
     event_id, _, rest = span_id.partition(":")
     who, _, kind = rest.rpartition(":")
     conn = runtime.db.connection
@@ -295,6 +298,7 @@ def span_detail(runtime, span_id: str) -> dict[str, Any] | None:
                     "summary": summarise(e),
                     "payload": e.get("payload", {}),
                     "seq": b["seq"],
+                    "information": information.event(e),
                 }
             )
     cause = conn.execute(
@@ -312,6 +316,7 @@ def span_detail(runtime, span_id: str) -> dict[str, Any] | None:
             "created_at": event["created_at"],
             "summary": summarise(event),
             "payload": event.get("payload", {}),
+            "information": information.event(event),
         },
         "outputs": sorted(produced, key=lambda e: e["seq"]),
         "caused_by": {"event_id": cause["cause_id"], "by": cause["subscriber"]} if cause else None,

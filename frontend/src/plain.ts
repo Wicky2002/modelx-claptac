@@ -27,6 +27,10 @@ export interface Alert {
   severity: string;
   msg_type: string;
   texts: Record<string, AlertText>;
+  delivery_mode?: string;
+  delivered?: string[];
+  missing?: string[];
+  sent_at?: string;
   sent?: string;
   created_at?: string;
 }
@@ -52,7 +56,7 @@ export function place(incidentId: string): string {
 }
 
 const STATUS: Record<string, string> = {
-  created: "Sent to the team",
+  created: "Ticket issued · awaiting acknowledgement",
   acknowledged: "Team has confirmed",
   in_progress: "Under way",
   completed: "Done",
