@@ -11,11 +11,11 @@ test("replay stays marked across map, evidence and navigation", async ({ page, r
   await page.goto("/manager/#/map");
   await expect(page.getByText("REPLAY / TRAINING", { exact: true })).toBeVisible();
   await expect(page.getByText("SIMULATED CLOCK", { exact: true })).toBeVisible();
-  await expect(page.locator(".mk.shelter").first()).toBeVisible();
+  await expect(page.locator(".marker-shelter").first()).toBeVisible();
   await page.getByRole("textbox", { name: "Search the map" }).fill("Shelter 01");
   await page.getByRole("textbox", { name: "Search the map" }).press("Enter");
-  await expect(page.locator(".details")).toContainText("synthetic");
-  await expect(page.locator(".details")).toContainText("unknown until occupancy is reported");
+  await expect(page.locator(".map-inspector")).toContainText("synthetic");
+  await expect(page.locator(".map-inspector")).toContainText("Unknown until occupancy is reported");
   const screenshots = process.env.ATLAS_SCREENSHOT_DIR;
   if (screenshots) {
     mkdirSync(screenshots, { recursive: true });
