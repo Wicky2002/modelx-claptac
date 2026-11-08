@@ -133,15 +133,15 @@ export function App() {
   else body = <div className="page empty">That page does not exist. <a href="#/overview">Go to the overview</a>.</div>;
 
   const link = (i: Item) => (
-    <a key={i.path} href={`#/${i.path}`} aria-label={i.label} className={page === i.path ? "on" : ""} onClick={() => go(`#/${i.path}`)} title={i.title}>
-      <span className="ni" aria-hidden="true">{i.icon}</span>
-      <span className="nav-label">{i.label}</span>
+    <a key={i.path} className={page === i.path ? "on" : ""} onClick={() => go(`#/${i.path}`)} title={i.title}>
+      <span className="ni">{i.icon}</span>
+      {i.label}
       {i.path === "decisions" && (pending.data?.length ?? 0) > 0 && <span className="badge">{pending.data!.length}</span>}
     </a>
   );
 
   return (
-    <div className={`shell ${page === "map" ? "map-shell" : ""}`}>
+    <div className="shell">
       <nav className="nav">
         <div className="brand">
           ATLAS

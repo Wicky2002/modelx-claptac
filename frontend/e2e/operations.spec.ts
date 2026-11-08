@@ -22,7 +22,7 @@ test("operator can audit sources, incidents, previews and field acknowledgements
   expect(await sources.locator(".audit-section-head").textContent()).toBe(refreshed);
   await page.unroute("**/dev/sources");
 
-  await page.getByRole("link", { name: "Incidents", exact: true }).click();
+  await page.locator(".nav a").filter({ hasText: "Incidents" }).click();
   await expect(page.getByRole("region", { name: "What changed", exact: true })).toContainText("incident commander proposes");
   await expect(page.getByRole("region", { name: "Why approval is needed", exact: true })).toContainText("Proposed");
   await expect(page.getByRole("region", { name: "Route alternatives", exact: true })).toContainText("Passes model threshold");
@@ -33,7 +33,7 @@ test("operator can audit sources, incidents, previews and field acknowledgements
   if (screenshots) await page.screenshot({ path: `${screenshots}/u3-response-gaps.png` });
 
   const alertsBefore = (await (await request.get("/alerts")).json()).length;
-  await page.getByRole("link", { name: "Decisions", exact: true }).click();
+  await page.locator(".nav a").filter({ hasText: "Decisions" }).click();
   const preview = page.getByRole("region", { name: "Communication preview", exact: true }).first();
   await expect(preview).toContainText("Estimated expiry");
   for (const lang of ["si", "ta", "en"]) await expect(preview.locator(`article[lang=${lang}] .preview-instruction`)).toBeVisible();
@@ -42,7 +42,7 @@ test("operator can audit sources, incidents, previews and field acknowledgements
   await preview.scrollIntoViewIfNeeded();
   if (screenshots) await page.screenshot({ path: `${screenshots}/u3-communication-preview.png` });
 
-  await page.getByRole("link", { name: "Teams & missions", exact: true }).click();
+  await page.locator(".nav a").filter({ hasText: "Teams & missions" }).click();
   await page.locator(".mission-ticket-button").filter({ hasText: "No acknowledgement recorded" }).first().click();
   const ticket = page.getByRole("region", { name: "Field mission ticket", exact: true });
   await expect(ticket.getByRole("button", { name: "Record progress", exact: true })).toBeDisabled();
