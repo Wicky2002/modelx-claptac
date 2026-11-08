@@ -71,26 +71,14 @@ measurement-modelling study (§8, §10).
 - Strict Ditwah replay: gate each input by its historical availability time; report reanalysis-assisted results separately; compare warning time vs the 9.5 m major-flood crossing and vs the rule-only baseline. Re-check the 10.21 m / 9.5 m anchors against station records.
 - Add model-backed variants to `python -m atlas.benchmark` so the existing 10 tasks × 3 seeds still pass with models in the loop.
 
-## Suggested order and owners
+## Who does what
 
-Owners follow who built the neighbouring code; change as the team prefers.
-
-| Order | Work | Suggested owner | Depends on |
-|---|---|---|---|
-| 1 | W1 access checks + dataset cards | Dinuka (data sources) | — |
-| 2 | W2 splits, features, EDA | Dinuka + Aeshan | W1 |
-| 3a | Landslide LightGBM + A1 wiring | Aeshan (Sentinel) | W2 |
-| 3b | Radar threshold baseline → U-Net + A2 → road evidence | Sumudu (routing) | W2, GPU |
-| 3c | Report keyword baseline → transformer | Aeshan (intelligence) | W1 |
-| 4 | W4 model registry + ledger logging | Dinuka (control boundary) | can start in parallel with 3 |
-| 5 | W5 A10 + promotion policy + console view | Dinuka | W4 |
-| 6 | W6 evaluation, model cards, Ditwah strict replay | whole team | 3, 4 |
-| — | LoRa: real sensor sequences for landslide validation if hardware time allows | Hasindu | — |
+Owners and task order are in [team-split.md](team-split.md).
 
 ## Decisions needed from the team
 
 1. Milestone dates (the proposal's Phase 1/2/3 mapping to ModelX milestones is still open).
-2. GPU: who has one, or which cloud credits — decides whether the U-Net is M or S.
-3. IEEE DataPort access for Mawiongrim, disaster-news and AIFloodSense.
+2. ~~GPU~~ Decided: training runs on Dinuka's PC (RTX 2060, 6 GB), overnight by default.
+3. ~~IEEE DataPort access~~ Resolved: all four datasets are in the team Drive folder and cleared for use.
 4. Where weights live (Git LFS, GitHub release, or a download script from cloud storage).
 5. New dependencies (PyTorch, LightGBM, rasterio, transformers) in an optional `[ml]` extra so the Docker demo stays light.
