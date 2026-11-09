@@ -1,0 +1,26 @@
+key: mawiongrim
+name: Real-Time Landslide Dataset of Mawiongrim, Meghalaya, India
+origin: Gidon, Borah, Sahoo, Majumdar, Fujita and others, published on IEEE DataPort in 2023.
+version: Not stated by the publisher.
+doi: 10.21227/hyf5-3c15
+url: https://ieee-dataport.org/documents/real-time-landslide-dataset-mawiongrim-meghalaya-india
+licence: CC BY 4.0
+licence_source: DataCite record
+coverage: One site in Meghalaya, India. 696 hourly rows from 1 December 2022 01:00 to 30 December 2022 00:00.
+variables:
+  - Rainfall
+  - Water level
+  - Inclinometer readings at 30 m, 20 m and 10 m, up and down
+  - Five tensiometers
+label_meaning: The file has no landslide labels. Any target must be a sensor measurement.
+missingness: No blank cells. Units are not stated in the file.
+permitted_use: Research and derivative work with attribution, under CC BY 4.0. Must not be presented as landslide warning, because it contains no landslide events.
+limits:
+  - Rain in only 13 hours, peaking at 1.5, and soil sensors barely move.
+  - One month from one site.
+file: mawiongrim.csv
+size_bytes: 104720
+sha256: 7ae0f278bc2d8eea89f568d182887550eee6d7fa62b71770e7597038537cb418
+verified: true
+verification: Licence and description confirmed in the DataCite record. Bytes were not compared with a publisher checksum.
+split_file: mawiongrim.json

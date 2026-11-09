@@ -1,0 +1,27 @@
+key: aifloodsense
+name: AIFloodSense
+origin: Simantiris, Bacharidis, Papanikolaou, Giannakakis and Panagiotakis. Images gathered from web sources listed per image.
+version: Not stated by the publisher. Registered on IEEE DataPort in 2026.
+doi: 10.21227/qxs5-2e20
+url: https://ieee-dataport.org/documents/aifloodsense
+licence: CC BY 4.0
+licence_source: DataCite record and the dataset README
+coverage: 470 images of 1024x768 pixels, flood events from 2022 to 2024 across 64 countries. Mostly aerial. No Sri Lankan images.
+variables:
+  - RGB image
+  - Segmentation mask
+  - Flood name, year, country, continent, environment, sky, latitude, longitude, image source
+  - Answers to five visual questions per image
+label_meaning: "Mask grey values: 0 background, 85 building, 170 sky, 255 flood."
+missingness: No metadata cells are blank. Latitude and longitude use a decimal comma.
+permitted_use: Research and derivative work with attribution, under CC BY 4.0. The dataset paper asks to be cited. Each image's own rights rest with its listed source.
+limits:
+  - Every image is flooded, so the set cannot measure false alarms on dry scenes.
+  - The README says 230 flood events, but the metadata has 210 distinct flood names.
+  - Some flood names carry more than one year, and generic names may join separate events.
+file: AIFloodSense.zip
+size_bytes: 57324327
+sha256: 08e8f31db3dec61160c9daed31dd8b0c1545fb29d5645aebd71c624795804d2f
+verified: true
+verification: Licence and description confirmed in the DataCite record. The team's archive has the documented 470 image and mask pairs. Bytes were not compared with a publisher checksum.
+split_file: aifloodsense.json
