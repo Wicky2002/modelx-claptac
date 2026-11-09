@@ -46,6 +46,9 @@ class ActionRule(BaseModel):
     model_config = ConfigDict(extra="forbid")
     consequence: Consequence
     when: dict[str, Any] = Field(default_factory=dict)
+    # Replaces the global ``proposers`` for this action, so it opens one action without widening
+    # what anyone else may do.
+    proposers: list[str] | None = None
 
     @model_validator(mode="after")
     def known_predicates(self):
@@ -109,7 +112,9 @@ class PolicyEngine:
         def block(reason):
             return PolicyVerdict(verdict=Verdict.BLOCK, reason=reason)
 
-        if action.proposed_by not in self.policy.proposers:
+        rule = self.policy.actions.get(action.action_type)
+        proposers = rule.proposers if rule and rule.proposers is not None else self.policy.proposers
+        if action.proposed_by not in proposers:
             return block("unauthorised_proposer")
         agent = self.policy.agents.get(action.executor)
         if agent is None:

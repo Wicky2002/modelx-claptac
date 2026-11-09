@@ -27,11 +27,34 @@ registration: register a new version instead.
 | Status | Meaning | May move to |
 |---|---|---|
 | `candidate` | registered, answers nobody | `shadow`, `retired` |
-| `shadow` | may run beside the live model, never acted on | `live`, `retired` |
-| `live` | the one version `predict()` uses (the database enforces at most one) | `retired` |
-| `retired` | no longer used | none |
+| `shadow` | runs beside the live model, never acted on | `retired`; `live` with human approval |
+| `live` | the one version `predict()` uses (the database enforces at most one) | replaced by promotion or rollback |
+| `retired` | no longer used | `live` only as a rollback target |
 
 Making a version live retires the previous live version in the same transaction.
+
+## A10 Data & Learning, promotion and rollback
+
+`system.learning` (A10, `atlas/agents/a10_data_learning.py`) has read-only views of the registry and
+ledger and can publish events. It holds nothing that can change a model.
+
+- `drift(name)` compares the features the live model has received with `feature_stats` from training.
+- `shadow_summary(name, version)` compares a shadow version with the live one on the same inputs.
+- `review(name)` publishes both as a `MODEL_REVIEW` event.
+- `request_promotion(name, version)` and `request_rollback(name)` send a proposal to the Gateway.
+
+**How A10's request reaches the Gateway.** `policy.yaml` keeps A3 as the only general proposer. An
+action can name its own `proposers`, and `promote_model` and `rollback_model` name only A10. So A10
+can ask for those two things and nothing else, and A3 cannot ask for them. A10 uses the normal
+`PLAN_PROPOSED` route, and the `model_registry` executor carries out the change.
+
+Both actions are always high consequence. As a second check that does not depend on the policy file,
+`ModelRegistry.promote()` and `rollback()` refuse unless the ledger holds a human approval for exactly
+that version. Rollback is one step: it restores the version the last promotion replaced, then there
+is nothing further to roll back to.
+
+Shadow versions run inside `predict()` on the same input and are logged as `shadow_prediction`
+records. Their output is never returned to a caller.
 
 ## Calling a model
 

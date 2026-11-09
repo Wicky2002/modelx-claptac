@@ -11,6 +11,7 @@ from atlas.learning import (
     PredictionStatus,
     RegistryError,
 )
+from tests.model_helpers import promote_with_approval
 
 
 def spec(version="v1", **changes):
@@ -33,8 +34,7 @@ def spec(version="v1", **changes):
 
 def make_live(runtime, version="v1", predictor=None):
     runtime.models.register(spec(version))
-    runtime.models.set_status("dummy", version, ModelStatus.SHADOW, actor="test")
-    runtime.models.set_status("dummy", version, ModelStatus.LIVE, actor="test")
+    promote_with_approval(runtime, "dummy", version)
     runtime.inference.bind("dummy", version, predictor or (lambda f: {"score": f["rain"] / 10}))
 
 

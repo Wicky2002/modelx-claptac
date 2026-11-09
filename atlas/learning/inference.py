@@ -19,7 +19,7 @@ from typing import Any, Callable
 
 from pydantic import BaseModel
 
-from atlas.learning.registry import FeatureSpec, ModelRegistry
+from atlas.learning.registry import FeatureSpec, ModelRegistry, ModelStatus
 from atlas.memory.ledger import Ledger, canonical
 
 Predictor = Callable[[dict[str, Any]], dict[str, Any]]
@@ -97,15 +97,39 @@ class Inference:
         """Ask the live version of ``model``. Synchronous and safe inside a bus handler."""
         record = self.registry.live(model)
         if record is None:
-            return self._log(
+            result = self._log(
                 model, None, None, features, caller, evidence_ids, incident_id,
                 PredictionStatus.NO_MODEL, "no_live_version", None,
             )
-        status, reason, output = self._run(record.name, record.version, record, features)
-        return self._log(
-            model, record.version, record.operating_threshold, features, caller, evidence_ids,
-            incident_id, status, reason, output,
-        )
+        else:
+            status, reason, output = self._run(record.name, record.version, record, features)
+            result = self._log(
+                model, record.version, record.operating_threshold, features, caller, evidence_ids,
+                incident_id, status, reason, output,
+            )
+        self._run_shadows(model, features, result)
+        return result
+
+    def _run_shadows(self, model, features, live: Prediction) -> None:
+        """Run shadow versions on the same input. Logged for review, never returned to a caller."""
+        for record in self.registry.list(model):
+            if (
+                record.status is not ModelStatus.SHADOW
+                or (record.name, record.version) not in self._predictors
+            ):
+                continue
+            status, reason, output = self._run(record.name, record.version, record, features)
+            body = {
+                "shadow_of": live.prediction_id,
+                "model": model,
+                "version": record.version,
+                "status": status.value,
+                "reason": reason,
+                "output": output,
+                "made_at": live.made_at.isoformat(),
+            }
+            digest = sha256(canonical(body).encode()).hexdigest()
+            self.ledger.append(f"shadow:{digest}", "shadow_prediction", body)
 
     def _run(self, name, version, record, features):
         predictor = self._predictors.get((name, version))

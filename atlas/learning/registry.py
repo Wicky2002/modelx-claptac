@@ -25,12 +25,21 @@ class ModelStatus(str, Enum):
     RETIRED = "retired"
 
 
+# Moves that need no approval. Changing which version is live happens only in promote() and rollback().
 TRANSITIONS: dict[ModelStatus, set[ModelStatus]] = {
     ModelStatus.CANDIDATE: {ModelStatus.SHADOW, ModelStatus.RETIRED},
-    ModelStatus.SHADOW: {ModelStatus.LIVE, ModelStatus.RETIRED},
-    ModelStatus.LIVE: {ModelStatus.RETIRED},
+    ModelStatus.SHADOW: {ModelStatus.RETIRED},
+    ModelStatus.LIVE: set(),
     ModelStatus.RETIRED: set(),
 }
+
+
+def promotion_key(name: str, version: str) -> str:
+    return f"promote:{name}:{version}"
+
+
+def rollback_key(name: str, current: str, target: str) -> str:
+    return f"rollback:{name}:{current}:{target}"
 
 
 class RegistryError(ValueError):
@@ -43,6 +52,15 @@ class FeatureSpec(BaseModel):
     # Missing data must stay distinguishable from zero (proposal §5.2), so a feature that may be
     # missing says so and arrives as None rather than as a filled-in default.
     nullable: bool = False
+
+
+class FeatureStats(BaseModel):
+    """A numeric feature's training distribution, which drift checks compare against."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    mean: float = Field(allow_inf_nan=False)
+    std: float = Field(gt=0, allow_inf_nan=False)
+    missing_rate: float = Field(default=0.0, ge=0, le=1)
 
 
 class ModelSpec(BaseModel):
@@ -58,6 +76,7 @@ class ModelSpec(BaseModel):
     # Required but may be None for a model with no decision threshold (e.g. a multi-class classifier).
     operating_threshold: float | None
     artifact_uri: str | None = None
+    feature_stats: dict[str, FeatureStats] = Field(default_factory=dict)
 
 
 class ModelRecord(ModelSpec):
@@ -77,6 +96,8 @@ class ModelRegistry:
                 PRIMARY KEY (name, version));
             CREATE UNIQUE INDEX IF NOT EXISTS model_versions_one_live
                 ON model_versions(name) WHERE status = 'live';
+            CREATE TABLE IF NOT EXISTS model_rollback (
+                name TEXT PRIMARY KEY, live TEXT NOT NULL, previous TEXT NOT NULL);
         """)
 
     def register(self, spec: ModelSpec) -> ModelRecord:
@@ -110,7 +131,7 @@ class ModelRegistry:
     def set_status(
         self, name: str, version: str, status: ModelStatus, *, actor: str, reason: str = ""
     ) -> ModelRecord:
-        """Move one version along its lifecycle. A new live version retires the previous one."""
+        """Make a move that needs no approval. No route to or from live goes through here."""
         with self.db.transaction():
             row = self._row(name, version)
             if row is None:
@@ -118,12 +139,54 @@ class ModelRegistry:
             current = ModelStatus(row["status"])
             if status not in TRANSITIONS[current]:
                 raise RegistryError(f"{name} {version}: {current.value} -> {status.value} refused")
-            if status is ModelStatus.LIVE:
-                previous = self.live(name)
-                if previous is not None:
-                    self._move(previous, ModelStatus.RETIRED, actor, f"replaced by {version}")
             self._move(self._record(row), status, actor, reason)
             return self._record(self._row(name, version))
+
+    def promote(self, name: str, version: str, *, actor: str) -> ModelRecord:
+        """Make a shadow version live, only if a human approved exactly this version."""
+        with self.db.transaction():
+            row = self._row(name, version)
+            if row is None or ModelStatus(row["status"]) is not ModelStatus.SHADOW:
+                raise RegistryError(f"{name} {version} is not in shadow")
+            self._require_approval(promotion_key(name, version))
+            previous = self.live(name)
+            if previous is not None:
+                self._move(previous, ModelStatus.RETIRED, actor, f"replaced by {version}")
+                self.db.connection.execute(
+                    "INSERT OR REPLACE INTO model_rollback VALUES (?,?,?)",
+                    (name, version, previous.version),
+                )
+            else:
+                self.db.connection.execute("DELETE FROM model_rollback WHERE name=?", (name,))
+            self._move(self._record(row), ModelStatus.LIVE, actor, "approved promotion")
+            return self._record(self._row(name, version))
+
+    def rollback_target(self, name: str) -> str | None:
+        """The version a one-step rollback would restore, if there is one."""
+        current = self.live(name)
+        row = self.db.connection.execute(
+            "SELECT previous FROM model_rollback WHERE name=? AND live=?",
+            (name, current.version if current else ""),
+        ).fetchone()
+        return row["previous"] if row else None
+
+    def rollback(self, name: str, *, actor: str) -> ModelRecord:
+        """Restore the version the last promotion replaced. One step only, with human approval."""
+        with self.db.transaction():
+            current, target = self.live(name), self.rollback_target(name)
+            if current is None or target is None:
+                raise RegistryError(f"{name} has nothing to roll back to")
+            self._require_approval(rollback_key(name, current.version, target))
+            self._move(current, ModelStatus.RETIRED, actor, f"rolled back to {target}")
+            self._move(self.get(name, target), ModelStatus.LIVE, actor, "approved rollback")
+            self.db.connection.execute("DELETE FROM model_rollback WHERE name=?", (name,))
+            return self.get(name, target)
+
+    def _require_approval(self, key: str) -> None:
+        # The Gateway writes these two phases only when a person approves. A low-consequence
+        # authorisation has neither, so loosening the policy alone cannot make a model live.
+        if not any(self.ledger.get(f"action:{key}:{phase}") for phase in ("approved", "edited")):
+            raise RegistryError(f"no human approval on record for {key}")
 
     def _move(self, record: ModelRecord, status: ModelStatus, actor: str, reason: str) -> None:
         now = self.clock()
@@ -132,7 +195,8 @@ class ModelRegistry:
             (status.value, now.isoformat(), record.name, record.version),
         )
         self.ledger.append(
-            f"model:{record.name}:{record.version}:{status.value}:{now.isoformat()}",
+            f"model:{record.name}:{record.version}:{record.status.value}>{status.value}"
+            f":{now.isoformat()}",
             "model",
             {
                 "phase": "status_changed",

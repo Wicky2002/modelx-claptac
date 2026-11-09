@@ -17,6 +17,7 @@ from atlas.agents.a8_dispatch import Dispatch
 from atlas.agents.a9_comms import Comms
 from atlas.control.action_gateway import Gateway
 from atlas.control.approvals import ApprovalQueue
+from atlas.control.model_actions import ModelActions
 from atlas.control.policy_engine import PolicyEngine
 
 log = logging.getLogger(__name__)
@@ -85,5 +86,7 @@ def attach_control(
     gateway.is_suspended = lambda name: name in runtime.bus.suspended
     gateway.register_executor(dispatch.name, dispatch)
     gateway.register_executor(comms.name, comms)
+    model_actions = ModelActions(runtime.models, clock=runtime.clock)
+    gateway.register_executor(model_actions.name, model_actions)
     runtime.bus.subscribe(gateway.name, gateway.subscribes_to, gateway.handle_plan)
     return ControlPlane(runtime, policy, approvals, gateway, dispatch, comms)

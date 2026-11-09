@@ -38,6 +38,7 @@ class EventType(str, Enum):
     ACTION_BLOCKED = "action_blocked"  # Gateway -> ledger
     MISSION_STATUS = "mission_status"  # A8 -> A3
     ALERT_PUBLISHED = "alert_published"  # A9 -> ledger
+    MODEL_REVIEW = "model_review"  # A10 -> ledger
 
 
 class Event(BaseModel):
