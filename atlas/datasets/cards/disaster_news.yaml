@@ -13,7 +13,7 @@ variables:
   - Forty location bits per article, one per sentence
   - Forty impact bits per article, one per sentence
 label_meaning: "Event bits: 0 event present, then covid, flood, storm, heavy rain, cloudburst, landslide, earthquake, tsunami. Location and impact: bit i is 1 when sentence i holds that information."
-missingness: 962 articles have no event label. Sentence labels stop at 40 per article, and 190 articles are longer. Shorter articles are padded with zeros.
+missingness: No event labels are missing. 962 articles are labelled as having no disaster event, so they are negative examples. Sentence labels stop at 40 per article, and 190 articles are longer. Shorter articles are padded with zeros.
 permitted_use: Research and derivative work with attribution, under CC BY 4.0.
 limits:
   - Covers covid as well as natural hazards, so event scores need reporting per class.
