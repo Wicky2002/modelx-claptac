@@ -17,6 +17,7 @@ import json
 import logging
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from uuid import uuid4
 
 import yaml
@@ -24,6 +25,16 @@ from outbox import Outbox
 from sensors import build_sensor
 
 log = logging.getLogger("atlas-node")
+
+
+def record_reading(path: str | None, payload: dict) -> None:
+    """Append a measured reading before transport so network outages do not lose the bench record."""
+    if not path:
+        return
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("a", encoding="utf-8") as recording:
+        recording.write(json.dumps(payload, sort_keys=True) + "\n")
 
 
 class MqttTransport:
@@ -102,18 +113,18 @@ def main():
         for sensor in sensors:
             try:
                 for m in sensor.read():
-                    buffer.append(
-                        {
-                            "node_id": node_id,
-                            "measurement_id": uuid4().hex,
-                            "sensor_id": sensor.sensor_id,
-                            "type": m.type,
-                            "value": m.value,
-                            "unit": m.unit,
-                            "timestamp": now,
-                            "location": location,
-                        }
-                    )
+                    payload = {
+                        "node_id": node_id,
+                        "measurement_id": uuid4().hex,
+                        "sensor_id": sensor.sensor_id,
+                        "type": m.type,
+                        "value": m.value,
+                        "unit": m.unit,
+                        "timestamp": now,
+                        "location": location,
+                    }
+                    buffer.append(payload)
+                    record_reading(cfg.get("recording_path"), payload)
             except Exception:
                 log.exception("failed to read %s", sensor.sensor_id)
 
