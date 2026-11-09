@@ -17,7 +17,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import Field, model_validator
 
-from atlas.benchmark.runner import OUTPUTS, run_suite
+from atlas.benchmark.runner import OUTPUTS, read_settled, run_suite
 from atlas.benchmark.schema import ROOT, Slug, Strict, Task, load_tasks
 from atlas.dashboard.dev.runs import span_detail
 from atlas.dashboard.dev.timeline import event_detail, planning_detail, timeline
@@ -90,7 +90,7 @@ class BenchmarkService:
         path = self.directory(run_id) / "status.json"
         if not path.exists():
             return {"id": run_id, "state": "starting", "results": []}
-        state = json.loads(path.read_text())
+        state = json.loads(read_settled(path))
         if state["state"] == "running" and run_id != self.active_id:
             state["state"] = "interrupted"
         return state

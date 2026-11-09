@@ -40,6 +40,17 @@ def swap(tmp, path, attempts=40):
             time.sleep(0.05)
 
 
+def read_settled(path, attempts=40):
+    """Read a file ``swap`` may be replacing. Windows refuses the open during the rename; retry."""
+    for attempt in range(attempts):
+        try:
+            return Path(path).read_text()
+        except PermissionError:
+            if attempt == attempts - 1:
+                raise
+            time.sleep(0.05)
+
+
 def write_json(path, value):
     path = Path(path)
     tmp = path.with_suffix(path.suffix + ".tmp")
@@ -332,7 +343,15 @@ def score(task, metrics):
 
 
 async def run_case(
-    task, seed, folder, *, random_enabled=True, step_delay_ms=0, stop=None, progress=None
+    task,
+    seed,
+    folder,
+    *,
+    random_enabled=True,
+    step_delay_ms=0,
+    stop=None,
+    progress=None,
+    stand_in_models=False,
 ):
     folder.mkdir(parents=True, exist_ok=False)
     steps = materialize(task, seed, random_enabled)
@@ -353,6 +372,10 @@ async def run_case(
         policy["actions"]["create_mission"] = {"consequence": "high", "when": {}}
     system = attach_all(runtime, policy=PolicyEngine(Policy.model_validate(policy)))
     system.intelligence.provider = None
+    if stand_in_models:
+        from atlas.benchmark.standins import install
+
+        install(runtime)
     recorder = Recorder(folder, runtime)
     previous, inputs, status, error = {}, [], "completed", None
     began = time.perf_counter()
@@ -443,7 +466,9 @@ async def run_case(
     return result
 
 
-async def run_suite(tasks, seeds, folder, *, random_enabled=True, step_delay_ms=0, stop=None):
+async def run_suite(
+    tasks, seeds, folder, *, random_enabled=True, step_delay_ms=0, stop=None, stand_in_models=False
+):
     from atlas.benchmark.report import suite_report
 
     folder.mkdir(parents=True, exist_ok=False)
@@ -469,6 +494,7 @@ async def run_suite(tasks, seeds, folder, *, random_enabled=True, step_delay_ms=
         "random_enabled": random_enabled,
         "step_delay_ms": step_delay_ms,
         "total": len(tasks) * len(seeds),
+        "stand_in_models": stand_in_models,
         "completed": 0,
         "current": None,
         "results": [],
@@ -515,6 +541,7 @@ async def run_suite(tasks, seeds, folder, *, random_enabled=True, step_delay_ms=
                     step_delay_ms=step_delay_ms,
                     stop=stop,
                     progress=progress,
+                    stand_in_models=stand_in_models,
                 )
                 state["results"].append(result)
                 state["completed"] += 1
