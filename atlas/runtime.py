@@ -9,6 +9,7 @@ from atlas.core.config import Settings
 from atlas.core.cop import COP
 from atlas.core.event_bus import EventBus
 from atlas.core.storage import Database
+from atlas.learning import Inference, ModelRegistry
 from atlas.memory.knowledge_graph import KnowledgeGraph
 from atlas.memory.ledger import Ledger
 from atlas.reasoning import Planner
@@ -23,6 +24,8 @@ class Runtime:
         self.ledger = Ledger(self.db)
         self.bus = EventBus(self.db, self.ledger)
         self.graph = KnowledgeGraph()
+        self.models = ModelRegistry(self.db, self.ledger, clock=self.clock)
+        self.inference = Inference(self.models, self.ledger, clock=self.clock)
         self.sentinel = Sentinel(
             self.bus,
             self.cop,

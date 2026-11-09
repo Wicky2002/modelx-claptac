@@ -1,0 +1,11 @@
+# Optional: only needed to load real model weights. The Docker demo installs requirements.txt alone,
+# and with no weights loaded predict() reports "no_model" and agents keep their rules.
+# Install PyTorch for your platform first: https://pytorch.org/get-started/locally/
+-r requirements.txt
+torch>=2.5
+torchvision>=0.20
+rasterio>=1.4
+transformers>=4.44,<5
+sentencepiece
+protobuf
+lightgbm>=4.3

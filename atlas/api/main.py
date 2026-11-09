@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from atlas.api.dev_routes import router as dev_router
 from atlas.api.knowledge_routes import router as knowledge_router
+from atlas.api.model_routes import router as model_router
 from atlas.api.play_routes import router as play_router
 from atlas.api.routes import router
 from atlas.benchmark.api import BenchmarkService
@@ -93,6 +94,7 @@ def create_app(settings=None):
     app.include_router(knowledge_router)
     app.include_router(intelligence_router)
     app.include_router(benchmark_router)
+    app.include_router(model_router)
     audit.install(app)
 
     manager = Path(__file__).resolve().parents[1] / "dashboard" / "static" / "manager"

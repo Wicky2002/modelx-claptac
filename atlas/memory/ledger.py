@@ -53,6 +53,12 @@ class Ledger:
         )
         return [{**dict(row), "payload": json.loads(row["body"])} for row in rows]
 
+    def get(self, record_id: str):
+        row = self.db.connection.execute(
+            "SELECT * FROM ledger WHERE record_id=?", (record_id,)
+        ).fetchone()
+        return {**dict(row), "payload": json.loads(row["body"])} if row else None
+
     def verify(self) -> bool:
         previous = "0" * 64
         for row in self.records():
