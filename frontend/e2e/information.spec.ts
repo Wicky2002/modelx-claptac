@@ -8,11 +8,19 @@ test("replay stays marked across map, evidence and navigation", async ({ page, r
     data: { scenario: "ratnapura_ditwah_2025", speed: 60 },
   });
   expect(started.ok()).toBeTruthy();
+  // Exercise the name collision deliberately: a mission must already refer to
+  // this shelter before search runs, regardless of browser/machine speed.
+  await expect.poll(async () => {
+    const map = await (await request.get("/dev/map")).json();
+    return map.routes.some((route: { destination: string | null }) => route.destination === "Shelter 01");
+  }, { timeout: 30000 }).toBe(true);
   await page.goto("/manager/#/map");
   await expect(page.getByText("REPLAY / TRAINING", { exact: true })).toBeVisible();
   await expect(page.getByText("SIMULATED CLOCK", { exact: true })).toBeVisible();
   await page.getByRole("textbox", { name: "Search the map" }).fill("Shelter 01");
+  await expect(page.locator(".search-results .asset-row").first().locator(".asset-text b")).toHaveText("Shelter 01");
   await page.getByRole("textbox", { name: "Search the map" }).press("Enter");
+  await expect(page.locator(".map-inspector .asset-heading h2")).toHaveText("Shelter 01");
   await expect(page.locator(".map-inspector")).toContainText("synthetic");
   await expect(page.locator(".map-inspector")).toContainText("Unknown until occupancy is reported");
   const screenshots = process.env.ATLAS_SCREENSHOT_DIR;

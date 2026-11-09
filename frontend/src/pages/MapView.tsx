@@ -4,7 +4,7 @@ import { usePoll, type Approval } from "../api";
 import { InformationBadges, InformationDetail, type Information } from "../components/Information";
 import { Json } from "../components/Json";
 import { missionStatus } from "../plain";
-import { distance, LAYERS, metres, percent, roadState, SYMBOL, targets, type Kind, type Layer, type MapData, type Point, type Target } from "./map/model";
+import { distance, LAYERS, metres, percent, roadState, searchTargets, SYMBOL, targets, type Kind, type Layer, type MapData, type Point, type Target } from "./map/model";
 import { ORBIT, useScene } from "./map/useScene";
 import "./map/command-map.css";
 
@@ -40,7 +40,7 @@ export function MapPage() {
   const orbital = scene.view.zoom < 8;
   const anchor: Point = selected?.point ?? pin ?? [scene.view.lat, scene.view.lon];
   const nearby = useMemo(() => all.map(t => ({ ...t, distance: metres(anchor, t.point) })).sort((a, b) => a.distance - b.distance), [all, anchor[0], anchor[1]]);
-  const hits = query.trim() ? all.filter(t => `${t.title} ${t.subtitle}`.toLowerCase().includes(query.toLowerCase())).slice(0, 8) : [];
+  const hits = useMemo(() => searchTargets(all, query), [all, query]);
   const active = data?.routes.filter(r => !["completed", "cancelled", "failed"].includes(r.status)) ?? [];
   const incident = data?.areas.find(a => a.incident_id);
   const uncertain = data?.edges.filter(e => e.belief_open != null && e.belief_open >= .3 && e.belief_open < .7).length ?? 0;
