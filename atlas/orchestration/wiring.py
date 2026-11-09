@@ -31,6 +31,7 @@ def attach_orchestration(
         runtime.ledger,
         config=runtime.settings.sentinel,
         clock=runtime.clock,
+        inference=runtime.inference,
     )
     triage = Triage(runtime.bus, runtime.cop, runtime.ledger, clock=runtime.clock)
     commander = IncidentCommander(

@@ -9,6 +9,9 @@ Inputs
                                      nearby roads (`atlas.tools.sensor_map`); so do landslide signals
                                      (soil wetness, slope tilt) and earthquake reports, which affect
                                      steep roads.
+    RISK_UPDATE (from A2)            ``kind: "road_flood_evidence"``: roads a radar model saw under
+                                     water. Only ever evidence of closure, and never overrides newer
+                                     evidence about a road.
     TASK_ASSIGNED (from A3)          "plan routes from X to these destinations".
     COP                              `edge:<u>-<v>` / `belief_open` (this agent) and `edge:<u>-<v>` /
                                      `open` = False (A8's hard closures via close_major_route).
@@ -62,6 +65,7 @@ ASSUMPTIONS = (
     "Landslide and earthquake signals affect steep roads near the area, a demo rule, not geotechnics.",
     "Shelter capacity shown is static; live occupancy and assignment belong to A7.",
 )
+RADAR_RELIABILITY = 0.7  # demo weight for one radar closure report; not calibrated
 
 
 EvacuationConfig = RoutingConfig  # A4's name for the shared planning-agent config
@@ -69,7 +73,11 @@ EvacuationConfig = RoutingConfig  # A4's name for the shared planning-agent conf
 
 class Evacuation(Agent):
     name = EVACUATION_ASSIGNEE
-    subscribes_to = (EventType.OBSERVATION_VALIDATED, EventType.TASK_ASSIGNED)
+    subscribes_to = (
+        EventType.OBSERVATION_VALIDATED,
+        EventType.TASK_ASSIGNED,
+        EventType.RISK_UPDATE,
+    )
 
     def __init__(
         self,
@@ -103,6 +111,8 @@ class Evacuation(Agent):
             return self._on_observation(event)
         if event.type is EventType.TASK_ASSIGNED:
             return self._on_task(event)
+        if event.type is EventType.RISK_UPDATE and event.payload.get("kind") == "road_flood_evidence":
+            return self._on_radar(event)
         return []
 
     def _event(self, parent: Event, kind: EventType, payload: dict, now: datetime) -> Event:
@@ -145,8 +155,64 @@ class Evacuation(Agent):
         for r in reports:
             cmap.update_from_report(r.u, r.v, r.reported_open, step, r.reliability)
 
+        return self._commit(
+            event,
+            cmap,
+            before,
+            [*obs.evidence_ids, f"sensor_map:{obs.area_id}"],
+            obs.observed_at,
+            now,
+            {
+                "area_id": obs.area_id,
+                "level_cm": obs.value if obs.attribute == "water_level" else None,
+                "attribute": obs.attribute,
+                "value": obs.value,
+                "observation_id": obs.observation_id,
+                "evidence_ids": obs.evidence_ids,
+            },
+        )
+
+    def _on_radar(self, event: Event) -> list[Event]:
+        p = event.payload
+        if p.get("area_id") not in self.areas:
+            return []
+        now = self.clock()
+        try:
+            acquired = datetime.fromisoformat(p["acquired_at"])
+            flooded = list(p["flooded"])
+        except (KeyError, TypeError, ValueError):
+            log.warning("A4 ignoring malformed radar evidence %s", event.id)
+            return []
+        cmap, _ = self._load_map(self.cop.snapshot(now=now), now)
+        cmap.mark_persisted()
+        before = {(u, v): d["belief_open"] for u, v, d in cmap.map.edges(data=True)}
+        step = minutes(acquired)
+        for edge_id in flooded:
+            edge = self._index.get(edge_id)
+            # A scene is a snapshot from its acquisition time: it cannot close a road that has
+            # been reported on since.
+            if edge is not None and cmap.map[edge[0]][edge[1]]["last_updated"] <= step:
+                cmap.update_from_report(*edge, 0.0, step, RADAR_RELIABILITY)
+        return self._commit(
+            event,
+            cmap,
+            before,
+            list(p.get("evidence_ids", [])),
+            acquired,
+            now,
+            {
+                "area_id": p["area_id"],
+                "level_cm": None,
+                "attribute": "radar_flood",
+                "value": None,
+                "observation_id": p.get("scene_id"),
+                "evidence_ids": list(p.get("evidence_ids", [])),
+            },
+        )
+
+    def _commit(self, event, cmap, before, provenance, observed_at, now, details) -> list[Event]:
+        """Write what the evidence changed to the COP and announce roads that closed or reopened."""
         changed = cmap.changed_edges(self.config.write_epsilon)
-        provenance = [*obs.evidence_ids, f"sensor_map:{obs.area_id}"]
         for u, v in changed:
             d = cmap.map[u][v]
             self.cop.put(
@@ -156,7 +222,7 @@ class Evacuation(Agent):
                     value=round(d["belief_open"], 6),
                     confidence=round(1.0 - d["uncertainty"], 6),
                     provenance=provenance,
-                    updated_at=obs.observed_at,
+                    updated_at=observed_at,
                 )
             )
 
@@ -182,15 +248,10 @@ class Evacuation(Agent):
                 {
                     "kind": "road_access_changed",
                     "site": self.rg.name,
-                    "area_id": obs.area_id,
-                    "level_cm": obs.value if obs.attribute == "water_level" else None,
-                    "attribute": obs.attribute,
-                    "value": obs.value,
+                    **details,
                     "newly_closed": sorted(closed),
                     "newly_reopened": sorted(reopened),
-                    "observation_id": obs.observation_id,
                     "snapshot_version": self.cop.version,
-                    "evidence_ids": obs.evidence_ids,
                 },
                 now,
             )

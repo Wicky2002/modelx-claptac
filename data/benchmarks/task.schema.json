@@ -99,6 +99,7 @@
             "events.alert_published",
             "events.candidate_plan",
             "events.conflict_flag",
+            "events.flood_scene",
             "events.information_gap",
             "events.mission_status",
             "events.observation",

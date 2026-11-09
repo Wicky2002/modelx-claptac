@@ -60,6 +60,26 @@ not `ok`, `output` is `None`. **None of these statuses means "no hazard".**
 A feature that can be missing is declared `nullable` and sent as `None`, so missing stays different
 from zero. NaN and infinity are always rejected.
 
+## What the agents use models for
+
+The feature and output contracts are in `atlas/learning/contracts.py`. A wrapper around a trained
+model must match them, or the agent treats the answer as "the model said nothing".
+
+| Model name | Caller | Features | Output | Effect |
+|---|---|---|---|---|
+| `radar_flood` | A2, on a `FLOOD_SCENE` event | `scene_id`, `area_id` | `{"edges": {edge_id: fraction 0..1}}` | Roads at or over the threshold reach A4 as closure evidence |
+| `report_classifier` | A1, on a field report with text | `text` | `{"hazards": {name: score 0..1}}` | Agreement adds 0.1 to the report's confidence, like one corroborating source |
+
+Limits on what a model can do:
+
+- The rules decide when an alarm goes off. A model cannot raise a trigger on its own or hold one
+  back, and it never changes an A2 risk level, so warning floors stay in place.
+- A radar scene can only add evidence that a road is closed. A dry result says nothing, because
+  it could not reopen a road a gauge has closed.
+- A scene never overrides evidence about a road that is newer than its acquisition time.
+- Forecasts from the Mawiongrim study (H4) are not connected to anything: that dataset has no
+  landslide events.
+
 ## Tracing
 
 Every call, including the ones that could not use a model, is a ledger record of kind `prediction`

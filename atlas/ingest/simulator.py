@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from atlas.core.config import SentinelConfig, Settings
-from atlas.ingest.feeds import FeedReport
+from atlas.ingest.feeds import FeedReport, FloodScene, scene_event
 from atlas.ingest.feeds import to_event as report_event
 from atlas.ingest.sensors import SensorReading, to_event
 from atlas.runtime import Runtime
@@ -41,6 +41,8 @@ async def replay(runtime, scenario, clock):
         if payload.get("kind") == "sensor":
             payload.setdefault("measurement_id", str(index))
             event = to_event(SensorReading.model_validate(payload))
+        elif payload.get("kind") == "flood_scene":
+            event = scene_event(FloodScene.model_validate(payload))
         else:
             payload.setdefault("report_id", str(index))
             event = report_event(FeedReport.model_validate(payload))

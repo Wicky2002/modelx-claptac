@@ -387,7 +387,11 @@ def test_construction_validates_shelters_and_ignores_other_sites_areas(runtime, 
 def test_attach_routing_registers_a4_on_the_bus(runtime, routing):
     assert "a4_evacuation" in runtime.bus.handlers
     types, _ = runtime.bus.handlers["a4_evacuation"]
-    assert types == {EventType.OBSERVATION_VALIDATED, EventType.TASK_ASSIGNED}
+    assert types == {
+        EventType.OBSERVATION_VALIDATED,
+        EventType.TASK_ASSIGNED,
+        EventType.RISK_UPDATE,
+    }
 
 
 # ------------------------------------------------------- with the control boundary
