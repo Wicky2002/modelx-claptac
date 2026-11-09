@@ -28,10 +28,22 @@ export const percent = (n: number | null | undefined) => n == null ? "Unknown" :
 export function roadState(r: Road) {
   if (r.closed_by_decision) return { label: "Closure recorded", color: "#ff6679" };
   if (r.belief_open == null) return { label: "No passability evidence", color: "#65798c" };
-  if (r.information?.labels.includes("stale")) return { label: "Stale assessment", color: "#c79c67" };
-  if (r.belief_open < .3) return { label: "Probably closed", color: "#ff6679" };
+  const stale = r.information?.labels.includes("stale");
+  // Settled beliefs may retain an old timestamp while readings keep confirming them.
+  if (r.belief_open < .3) return { label: stale ? "Probably closed · stale" : "Probably closed", color: "#ff6679" };
+  if (stale) return { label: "Stale assessment", color: "#c79c67" };
   if (r.belief_open < .7) return { label: "Uncertain", color: "#f5bd5b" };
   return { label: "Probably open", color: "#64cbb0" };
+}
+export function searchTargets(all: readonly Target[], query: string): Target[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return [];
+  return all.map(target => {
+    const title = target.title.toLowerCase();
+    const rank = title === needle ? 0 : title.startsWith(needle) ? 1 : title.includes(needle) ? 2
+      : target.subtitle.toLowerCase().includes(needle) ? 3 : -1;
+    return { target, rank };
+  }).filter(hit => hit.rank >= 0).sort((a, b) => a.rank - b.rank).slice(0, 8).map(hit => hit.target);
 }
 export function metres(a: Point, b: Point) {
   const r = Math.PI / 180;
