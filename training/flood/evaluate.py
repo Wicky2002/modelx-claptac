@@ -66,7 +66,7 @@ def unet_scorer(checkpoint: Path, stats: dict) -> tuple[Scorer, dict]:
     model.eval()
 
     def score(x: np.ndarray) -> np.ndarray:
-        return predict_tile(model, normalise(x, stats), device)
+        return predict_tile(model, normalise(x, stats), device, window=state["window"])
 
     return score, {"threshold": state["threshold"], "epoch": state["epoch"]}
 

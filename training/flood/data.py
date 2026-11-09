@@ -1,10 +1,10 @@
 """MMFlood: prepare tiles once, then read random crops quickly.
 
-    python -m training.flood.data --data-root <path to mmflood/> --cache <cache dir>
+    python -m training.flood.data --data-root <path to mmflood/> --jrc <jrc dir> --cache <cache dir>
 
 Each tile becomes two uncompressed arrays, so a crop reads only the pixels it needs.
 
-    x: VV dB, VH dB, relative elevation, hydrography, hydrography-present
+    x: VV dB, VH dB, relative elevation, hydrography, hydrography-present, permanent water
     y: 0 dry, 1 flood, 255 no data (ignored by the loss and the scores)
 
 Splits come from MMFlood's own ``activations.json``, which separates whole events (proposal section 6).
@@ -21,7 +21,7 @@ import numpy as np
 
 IGNORE = 255
 DB_MIN, DB_MAX = -40.0, 10.0
-CHANNELS = 5
+CHANNELS = 6
 
 
 def to_db(power: np.ndarray) -> np.ndarray:
@@ -39,9 +39,11 @@ def tiles_by_split(data_root: Path) -> dict[str, list[tuple[str, str]]]:
     return out
 
 
-def prepare_tile(data_root: Path, name: str, cache: Path) -> None:
+def prepare_tile(data_root: Path, name: str, cache: Path, jrc_dir: Path) -> None:
     import rasterio
     import rasterio.enums
+
+    from training.flood.water import read_occurrence, water_channel
 
     aoi = "-".join(name.split("-")[:2])
     base = data_root / "activations" / aoi
@@ -74,7 +76,9 @@ def prepare_tile(data_root: Path, name: str, cache: Path) -> None:
     median = float(np.median(good_dem)) if good_dem.size else 0.0
     rel = np.clip(np.nan_to_num(dem - median, nan=0.0) / 100.0, -5, 5)
     present = np.full_like(rel, 1.0 if hydro_path.exists() else 0.0)
-    x = np.stack([vv, vh, rel, (hydro > 0).astype(np.float32), present]).astype(np.float16)
+    with rasterio.open(base / "s1_raw" / f"{name}.tif") as src:
+        water = water_channel(read_occurrence(jrc_dir, mask.shape, src.transform, src.crs, src.bounds))
+    x = np.stack([vv, vh, rel, (hydro > 0).astype(np.float32), present, water]).astype(np.float16)
     y = (mask > 0).astype(np.uint8)
     y[invalid] = IGNORE
 
@@ -147,6 +151,7 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument("--data-root", type=Path, required=True)
+    parser.add_argument("--jrc", type=Path, required=True, help="tiles from training.flood.water")
     parser.add_argument("--cache", type=Path, required=True)
     args = parser.parse_args()
     args.cache.mkdir(parents=True, exist_ok=True)
@@ -158,7 +163,7 @@ def main() -> None:
     for tiles in splits.values():
         for _, name in tiles:
             try:
-                prepare_tile(args.data_root, name, args.cache)
+                prepare_tile(args.data_root, name, args.cache, args.jrc)
             except Exception as err:  # keep going, then report every bad tile at the end
                 failed.append(f"{name}: {err}")
             done += 1

@@ -7,6 +7,8 @@ import torch
 from torch import nn
 from torchvision.models import ResNet34_Weights, resnet34
 
+from training.flood.data import CHANNELS
+
 
 def _conv(in_ch: int, out_ch: int) -> nn.Sequential:
     return nn.Sequential(
@@ -31,7 +33,7 @@ class Up(nn.Module):
 
 
 class FloodUNet(nn.Module):
-    def __init__(self, channels: int = 5, pretrained: bool = True) -> None:
+    def __init__(self, channels: int = CHANNELS, pretrained: bool = True) -> None:
         super().__init__()
         net = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1 if pretrained else None)
         first = nn.Conv2d(channels, 64, 7, stride=2, padding=3, bias=False)
@@ -68,8 +70,9 @@ def _starts(length: int, window: int, stride: int) -> list[int]:
 
 
 @torch.no_grad()
-def predict_tile(model, x: np.ndarray, device, window=384, stride=256, batch=8) -> np.ndarray:
+def predict_tile(model, x: np.ndarray, device, window=448, batch=8) -> np.ndarray:
     """Flood probability for a whole normalised tile (channels, height, width)."""
+    stride = window * 2 // 3
     _, height, width = x.shape
     total = np.zeros((height, width), dtype=np.float32)
     count = np.zeros((height, width), dtype=np.float32)

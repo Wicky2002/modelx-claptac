@@ -18,7 +18,8 @@ import torch
 from torch.utils.data import DataLoader
 
 from training.flood.data import IGNORE, CropDataset, normalise
-from training.flood.metrics import ScoreHistogram
+from training.flood.evaluate import pooled_best_threshold, score_tiles
+from training.flood.metrics import report
 from training.flood.model import FloodUNet, predict_tile
 
 
@@ -35,16 +36,18 @@ def loss_fn(logits, target, pos_weight: float):
     return bce + dice
 
 
-def validate(model, tiles, cache, stats, device) -> dict:
+def validate(model, tiles, cache, stats, device, window: int) -> dict:
+    """Scores at the best pooled threshold, plus the per-event mean used to choose the best epoch."""
     model.eval()
-    hist = ScoreHistogram()
-    for _, name in tiles:
-        x = normalise(np.load(cache / f"{name}.x.npy"), stats)
-        y = np.load(cache / f"{name}.y.npy")
-        probs = predict_tile(model, x, device)
-        keep = y != IGNORE
-        hist.add(probs[keep], y[keep])
-    return hist.scores_at(hist.best_threshold())
+    by_event = score_tiles(
+        tiles, cache, lambda x: predict_tile(model, normalise(x, stats), device, window=window)
+    )
+    scores = report(by_event, pooled_best_threshold(by_event))
+    return {
+        **scores["all_pixels"],
+        "mean_event_f1": scores["mean_event_f1"],
+        "mean_event_iou": scores["mean_event_iou"],
+    }
 
 
 def thin(tiles: list, limit: int) -> list:
@@ -57,10 +60,12 @@ def main() -> None:
     p.add_argument("--run", type=Path, required=True)
     p.add_argument("--epochs", type=int, default=40)
     p.add_argument("--batch", type=int, default=8)
-    p.add_argument("--crop", type=int, default=384)
+    p.add_argument("--crop", type=int, default=448, help="the smallest MMFlood tile side is 467")
     p.add_argument("--per-tile", type=int, default=2, help="crops per training tile per epoch")
     p.add_argument("--lr", type=float, default=1e-3)
-    p.add_argument("--pos-weight", type=float, default=5.0)
+    p.add_argument(
+        "--pos-weight", type=float, default=2.0, help="flood-centred crops already raise flood share"
+    )
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--val-every", type=int, default=2)
@@ -142,15 +147,16 @@ def main() -> None:
             }
             if (epoch + 1) % args.val_every == 0 or epoch + 1 == args.epochs:
                 t1 = time.time()
-                row["val"] = validate(model, val_tiles, args.cache, stats, device)
+                row["val"] = validate(model, val_tiles, args.cache, stats, device, args.crop)
                 row["val_seconds"] = round(time.time() - t1, 1)
-                if row["val"]["f1"] > best:
-                    best = row["val"]["f1"]
+                if row["val"]["mean_event_f1"] > best:
+                    best = row["val"]["mean_event_f1"]
                     torch.save(
                         {
                             "model": model.state_dict(),
                             "threshold": row["val"]["threshold"],
                             "epoch": epoch,
+                            "window": args.crop,
                         },
                         args.run / "best.pt",
                     )
