@@ -8,6 +8,7 @@ Only training and validation events are used here. Test events are scored separa
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random
 import time
@@ -23,7 +24,14 @@ from training.flood.metrics import report
 from training.flood.model import FloodUNet, predict_tile
 
 
-def loss_fn(logits, target, pos_weight: float):
+def hold_out(tiles: list, count: int) -> tuple[list, list]:
+    """Whole events set aside from training, the same ones every time: (kept, held out)."""
+    events = sorted({event for event, _ in tiles}, key=lambda e: hashlib.sha256(e.encode()).hexdigest())
+    chosen = set(events[:count])
+    return [t for t in tiles if t[0] not in chosen], [t for t in tiles if t[0] in chosen]
+
+
+def loss_fn(logits, target, pos_weight: float, dice_weight: float = 1.0):
     """Class-weighted BCE plus Dice, ignoring no-data pixels."""
     valid = target != IGNORE
     y = (target == 1).float()
@@ -33,7 +41,7 @@ def loss_fn(logits, target, pos_weight: float):
     p = torch.sigmoid(logits) * valid
     t = y * valid
     dice = 1 - (2 * (p * t).sum() + 1) / (p.sum() + t.sum() + 1)
-    return bce + dice
+    return bce + dice_weight * dice
 
 
 def validate(model, tiles, cache, stats, device, window: int) -> dict:
@@ -66,6 +74,16 @@ def main() -> None:
     p.add_argument(
         "--pos-weight", type=float, default=2.0, help="flood-centred crops already raise flood share"
     )
+    p.add_argument("--dice-weight", type=float, default=1.0)
+    p.add_argument("--weight-decay", type=float, default=0.01)
+    p.add_argument("--encoder-ratio", type=float, default=0.1, help="encoder lr as a share of --lr")
+    p.add_argument("--flood-crops", type=float, default=0.5, help="share of crops centred on flood")
+    p.add_argument(
+        "--hold-out",
+        type=int,
+        default=0,
+        help="score on N events held out of training instead of the validation events (settings search)",
+    )
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--val-every", type=int, default=2)
@@ -89,8 +107,12 @@ def main() -> None:
     bad = {f.split(":")[0] for f in manifest["failed"]}
     train_tiles = thin([t for t in manifest["splits"]["train"] if t[1] not in bad], args.limit_train)
     val_tiles = thin([t for t in manifest["splits"]["val"] if t[1] not in bad], args.limit_val)
+    if args.hold_out:
+        train_tiles, val_tiles = hold_out(train_tiles, args.hold_out)
 
-    data = CropDataset(train_tiles, args.cache, stats, args.crop, args.per_tile, args.seed)
+    data = CropDataset(
+        train_tiles, args.cache, stats, args.crop, args.per_tile, args.seed, args.flood_crops
+    )
     loader = DataLoader(
         data,
         batch_size=args.batch,
@@ -103,7 +125,9 @@ def main() -> None:
     encoder = [q for n, q in model.named_parameters() if n.startswith(("stem", "encoder"))]
     decoder = [q for n, q in model.named_parameters() if not n.startswith(("stem", "encoder"))]
     opt = torch.optim.AdamW(
-        [{"params": encoder, "lr": args.lr / 10}, {"params": decoder}], lr=args.lr
+        [{"params": encoder, "lr": args.lr * args.encoder_ratio}, {"params": decoder}],
+        lr=args.lr,
+        weight_decay=args.weight_decay,
     )
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
     scaler = torch.amp.GradScaler(device.type, enabled=use_amp)
@@ -131,7 +155,7 @@ def main() -> None:
                 x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
                 opt.zero_grad(set_to_none=True)
                 with torch.autocast(device.type, enabled=use_amp):
-                    loss = loss_fn(model(x), y, args.pos_weight)
+                    loss = loss_fn(model(x), y, args.pos_weight, args.dice_weight)
                 scaler.scale(loss).backward()
                 scaler.step(opt)
                 scaler.update()

@@ -113,9 +113,11 @@ def normalise(x: np.ndarray, stats: dict) -> np.ndarray:
 class CropDataset:
     """Random training crops. Half are centred on a flood pixel because only about 3% of pixels flood."""
 
-    def __init__(self, tiles, cache: Path, stats: dict, crop: int, per_tile: int, seed: int) -> None:
+    def __init__(
+        self, tiles, cache: Path, stats: dict, crop: int, per_tile: int, seed: int, flood_crops=0.5
+    ) -> None:
         self.tiles, self.cache, self.stats, self.crop = tiles, Path(cache), stats, crop
-        self.per_tile, self.seed = per_tile, seed
+        self.per_tile, self.seed, self.flood_crops = per_tile, seed, flood_crops
         self.epoch = 0
 
     def __len__(self) -> int:
@@ -129,7 +131,7 @@ class CropDataset:
         height, width = y.shape
         size = self.crop
         top, left = rng.randint(0, height - size), rng.randint(0, width - size)
-        if rng.random() < 0.5:
+        if rng.random() < self.flood_crops:
             rows, cols = np.nonzero(np.asarray(y) == 1)
             if rows.size:
                 i = rng.randrange(rows.size)
