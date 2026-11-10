@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { usePoll, type HazardEvent } from "../api";
 
+import { DatasetReview } from "./review/DatasetReview";
+
 interface History {
   retrieved: string;
   region: string;
@@ -10,14 +12,14 @@ interface History {
 
 const COLORS: Record<string, string> = { flood: "#2563eb", cyclone: "#7c3aed", earthquake: "#b45309", tsunami: "#0e7490", drought: "#ca8a04", landslide: "#65a30d", volcano: "#dc2626", wildfire: "#ea580c", other: "#64748b" };
 
-export function DataPage() {
+function HazardHistory() {
   const { data, error } = usePoll<History>("/dev/history", 0);
   const [hazard, setHazard] = useState<string | null>(null);
   const [pick, setPick] = useState<HazardEvent | null>(null);
   const events = useMemo(() => (data?.events ?? []).filter((e) => !hazard || e.hazard === hazard), [data, hazard]);
   const hazards = useMemo(() => [...new Set((data?.events ?? []).map((e) => e.hazard))], [data]);
-  if (error) return <div className="page"><div className="err">{error}</div></div>;
-  if (!data) return <div className="page muted">Loading…</div>;
+  if (error) return <div className="history-content"><div className="err">{error}</div></div>;
+  if (!data) return <div className="muted">Loading…</div>;
 
   const lanes = hazards;
   const t0 = Math.min(...events.map((e) => +new Date(e.start)), Date.now());
@@ -30,7 +32,7 @@ export function DataPage() {
   for (let y = Math.ceil(new Date(t0).getFullYear() / 10) * 10; y <= new Date().getFullYear(); y += 10) years.push(y);
 
   return (
-    <div className="page">
+    <div className="history-content">
       <div className="card" style={{ marginBottom: 12 }}>
         <h2>Hazard history · {data.region} · {data.events.length} real events from {data.sources.filter((s) => s.count).length} sources</h2>
         <div className="row" style={{ marginBottom: 8 }}>
@@ -88,4 +90,12 @@ export function DataPage() {
       </div>
     </div>
   );
+}
+
+export function DataPage() {
+  const [tab, setTab] = useState("datasets");
+  return <div className="page"><div className="review-tabs" role="group" aria-label="Data views">
+    <button className={`btn ${tab === "datasets" ? "primary" : ""}`} aria-pressed={tab === "datasets"} onClick={() => setTab("datasets")}>Training datasets</button>
+    <button className={`btn ${tab === "history" ? "primary" : ""}`} aria-pressed={tab === "history"} onClick={() => setTab("history")}>Hazard history</button>
+  </div>{tab === "datasets" ? <DatasetReview /> : <HazardHistory />}</div>;
 }

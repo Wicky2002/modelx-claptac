@@ -13,6 +13,7 @@ from atlas.api.dev_routes import router as dev_router
 from atlas.api.knowledge_routes import router as knowledge_router
 from atlas.api.model_routes import router as model_router
 from atlas.api.play_routes import router as play_router
+from atlas.api.review_routes import router as review_router
 from atlas.api.routes import router
 from atlas.benchmark.api import BenchmarkService
 from atlas.benchmark.api import router as benchmark_router
@@ -89,6 +90,7 @@ def create_app(settings=None):
 
     app.include_router(router)
     app.include_router(dev_router)
+    app.include_router(review_router)
     app.include_router(play_router)
     app.include_router(manager_router)
     app.include_router(knowledge_router)

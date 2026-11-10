@@ -7,6 +7,7 @@ import { ApprovalsPage } from "./pages/Approvals";
 import { AskPage } from "./pages/Ask";
 import { AuditPage } from "./pages/Audit";
 import { BenchmarksPage } from "./pages/Benchmarks";
+import { ModelReviewPage } from "./pages/review/ModelReview";
 import { DataPage } from "./pages/Data";
 import { DecisionsPage } from "./pages/Decisions";
 import { EvaluationsPage } from "./pages/Evaluations";
@@ -57,6 +58,7 @@ const TECHNICAL: Item[] = [
   { path: "approvals", label: "Approvals (advanced)", icon: "✎", title: "Approvals with editable details" },
   { path: "audit", label: "Audit log", icon: "≣", title: "Who changed what, and when" },
   { path: "data", label: "Data & history", icon: "◫", title: "Where the data comes from" },
+  { path: "model-review", label: "Model review", icon: "◷", title: "Model metrics, drift and promotion history" },
   { path: "llm-settings", label: "AI model settings", icon: "⚙", title: "Which AI model ATLAS may use" },
 ];
 
@@ -126,6 +128,7 @@ export function App() {
   else if (page === "metrics") body = <MetricsPage />;
   else if (page === "playground") body = <Playground />;
   else if (page === "data") body = <DataPage />;
+  else if (page === "model-review") body = <ModelReviewPage />;
   else if (page === "agents") body = <AgentsPage />;
   else if (page === "evaluations") body = <EvaluationsPage />;
   else if (page === "guardrails") body = <GuardrailsPage />;
