@@ -1,0 +1,125 @@
+{
+  "mode": "sample",
+  "as_of": "2026-01-01T00:00:00Z",
+  "registry_available": true,
+  "learning_available": true,
+  "models": [
+    {
+      "name": "flood-segmentation",
+      "version": "sample-v1",
+      "task": "Flood mapping",
+      "feature_schema": {
+        "vv": {
+          "type": "float",
+          "nullable": false
+        }
+      },
+      "dataset_versions": {
+        "mmflood": "illustrative-v1"
+      },
+      "metrics": {
+        "iou": 0.62,
+        "f1": 0.77
+      },
+      "operating_threshold": 0.5,
+      "feature_stats": {},
+      "status": "live",
+      "registered_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "name": "flood-segmentation",
+      "version": "sample-v2",
+      "task": "Flood mapping",
+      "feature_schema": {
+        "vv": {
+          "type": "float",
+          "nullable": false
+        }
+      },
+      "dataset_versions": {
+        "mmflood": "illustrative-v1"
+      },
+      "metrics": {
+        "iou": 0.68,
+        "f1": 0.81
+      },
+      "operating_threshold": 0.5,
+      "feature_stats": {},
+      "status": "shadow",
+      "registered_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "name": "flood-segmentation",
+      "version": "sample-v3",
+      "task": "Flood mapping",
+      "feature_schema": {
+        "vv": {
+          "type": "float",
+          "nullable": false
+        }
+      },
+      "dataset_versions": {
+        "mmflood": "illustrative-v1"
+      },
+      "metrics": {
+        "iou": 0.69,
+        "f1": 0.82
+      },
+      "operating_threshold": 0.5,
+      "feature_stats": {},
+      "status": "candidate",
+      "registered_at": "2026-01-01T00:00:00Z",
+      "updated_at": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "reviews": [
+    {
+      "name": "flood-segmentation",
+      "drift": {
+        "model": "flood-segmentation",
+        "version": "sample-v1",
+        "status": "checked",
+        "samples": 120,
+        "drifted": true,
+        "features": {
+          "vv": {
+            "shift_std": 0.64,
+            "missing_rate": 0.02,
+            "drifted": true
+          }
+        }
+      },
+      "shadows": [
+        {
+          "model": "flood-segmentation",
+          "version": "sample-v2",
+          "runs": 80,
+          "errors": 2,
+          "compared_with_live": 78,
+          "mean_abs_difference": 0.07
+        }
+      ]
+    }
+  ],
+  "history": [
+    {
+      "phase": "status_changed",
+      "name": "flood-segmentation",
+      "version": "sample-v1",
+      "to": "live",
+      "actor": "sample-reviewer",
+      "reason": "Illustrative approved promotion",
+      "at": "2026-01-01T00:00:00Z",
+      "from": "shadow"
+    },
+    {
+      "phase": "registered",
+      "name": "flood-segmentation",
+      "version": "sample-v2",
+      "at": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "requests": []
+}

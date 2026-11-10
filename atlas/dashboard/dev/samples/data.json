@@ -1,0 +1,269 @@
+{
+  "mode": "sample",
+  "as_of": "2026-01-01T00:00:00Z",
+  "cards": [
+    {
+      "key": "mmflood",
+      "name": "MMFlood",
+      "version": "illustrative-v1",
+      "coverage": "Illustrative dataset summary",
+      "variables": [],
+      "label_meaning": "See profile labels",
+      "missingness": "Illustrative values only",
+      "licence": "Sample fixture",
+      "limits": [
+        "Illustrates valid-pixel imbalance. Ignored pixels are excluded from the percentage."
+      ],
+      "verified": false,
+      "verification": "Not a dataset verification",
+      "splits": [
+        {
+          "name": "train",
+          "count": 700,
+          "unit": "example items",
+          "tiles": null
+        },
+        {
+          "name": "val",
+          "count": 150,
+          "unit": "example items",
+          "tiles": null
+        },
+        {
+          "name": "test",
+          "count": 150,
+          "unit": "example items",
+          "tiles": null
+        }
+      ]
+    },
+    {
+      "key": "disaster-news",
+      "name": "Disaster news",
+      "version": "illustrative-v1",
+      "coverage": "Illustrative dataset summary",
+      "variables": [],
+      "label_meaning": "See profile labels",
+      "missingness": "Illustrative values only",
+      "licence": "Sample fixture",
+      "limits": [
+        "Multi-label examples may overlap; these bars do not form a partition."
+      ],
+      "verified": false,
+      "verification": "Not a dataset verification",
+      "splits": [
+        {
+          "name": "train",
+          "count": 700,
+          "unit": "example items",
+          "tiles": null
+        },
+        {
+          "name": "val",
+          "count": 150,
+          "unit": "example items",
+          "tiles": null
+        },
+        {
+          "name": "test",
+          "count": 150,
+          "unit": "example items",
+          "tiles": null
+        }
+      ]
+    },
+    {
+      "key": "mawiongrim",
+      "name": "Mawiongrim",
+      "version": "illustrative-v1",
+      "coverage": "Illustrative dataset summary",
+      "variables": [],
+      "label_meaning": "See profile labels",
+      "missingness": "Illustrative values only",
+      "licence": "Sample fixture",
+      "limits": [
+        "Units are not supplied. Association does not establish causation or landslide risk. No landslide labels."
+      ],
+      "verified": false,
+      "verification": "Not a dataset verification",
+      "splits": [
+        {
+          "name": "train",
+          "count": 700,
+          "unit": "example items",
+          "tiles": null
+        },
+        {
+          "name": "val",
+          "count": 150,
+          "unit": "example items",
+          "tiles": null
+        },
+        {
+          "name": "test",
+          "count": 150,
+          "unit": "example items",
+          "tiles": null
+        }
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "schema_version": 1,
+      "dataset_version": "illustrative-v1",
+      "split": "train",
+      "seed": 42,
+      "generated_at": "2026-01-01T00:00:00Z",
+      "source": "U4 illustrative fixture; not measured training data",
+      "label_unit": "items",
+      "labels": [],
+      "flood_pixels": {
+        "flood": 3000,
+        "non_flood": 97000,
+        "ignored": 2500
+      },
+      "relationships": [],
+      "notes": [
+        "Illustrates valid-pixel imbalance. Ignored pixels are excluded from the percentage."
+      ],
+      "dataset": "mmflood"
+    },
+    {
+      "schema_version": 1,
+      "dataset_version": "illustrative-v1",
+      "split": "train",
+      "seed": 42,
+      "generated_at": "2026-01-01T00:00:00Z",
+      "source": "U4 illustrative fixture; not measured training data",
+      "label_unit": "articles per label",
+      "labels": [
+        {
+          "label": "Flood",
+          "count": 620
+        },
+        {
+          "label": "Storm",
+          "count": 390
+        },
+        {
+          "label": "Heavy rain",
+          "count": 480
+        },
+        {
+          "label": "Landslide",
+          "count": 220
+        },
+        {
+          "label": "No event",
+          "count": 160
+        }
+      ],
+      "flood_pixels": null,
+      "relationships": [],
+      "notes": [
+        "Multi-label examples may overlap; these bars do not form a partition."
+      ],
+      "dataset": "disaster-news"
+    },
+    {
+      "schema_version": 1,
+      "dataset_version": "illustrative-v1",
+      "split": "train",
+      "seed": 42,
+      "generated_at": "2026-01-01T00:00:00Z",
+      "source": "U4 illustrative fixture; not measured training data",
+      "label_unit": "items",
+      "labels": [],
+      "flood_pixels": null,
+      "relationships": [
+        {
+          "x_label": "Rain",
+          "y_label": "Soil moisture",
+          "x_unit": null,
+          "y_unit": null,
+          "method": "Binned paired readings; marker area represents count",
+          "total_pairs": 80,
+          "bins": [
+            {
+              "x": 0,
+              "y": 28,
+              "count": 26
+            },
+            {
+              "x": 0,
+              "y": 29,
+              "count": 20
+            },
+            {
+              "x": 0.3,
+              "y": 29,
+              "count": 12
+            },
+            {
+              "x": 0.6,
+              "y": 30,
+              "count": 9
+            },
+            {
+              "x": 1,
+              "y": 30,
+              "count": 8
+            },
+            {
+              "x": 1.5,
+              "y": 31,
+              "count": 5
+            }
+          ]
+        }
+      ],
+      "notes": [
+        "Units are not supplied. Association does not establish causation or landslide risk. No landslide labels."
+      ],
+      "dataset": "mawiongrim"
+    }
+  ],
+  "evaluations": [
+    {
+      "dataset": "mmflood",
+      "dataset_version": "illustrative-v1",
+      "model_version": "sample-unet-v2",
+      "seed": 42,
+      "generated_at": "2026-01-01T00:00:00Z",
+      "source": "U4 illustrative fixture; not measured training data",
+      "file": "sample-report.json",
+      "split": "val",
+      "tiles": 150,
+      "variants": [
+        {
+          "name": "baseline",
+          "metrics": {
+            "iou": 0.41,
+            "f1": 0.58,
+            "precision": 0.63,
+            "recall": 0.54,
+            "mean_event_iou": 0.37,
+            "mean_event_f1": 0.5499999999999999
+          },
+          "events": 12,
+          "threshold": 0.5
+        },
+        {
+          "name": "unet",
+          "metrics": {
+            "iou": 0.68,
+            "f1": 0.81,
+            "precision": 0.84,
+            "recall": 0.78,
+            "mean_event_iou": 0.64,
+            "mean_event_f1": 0.78
+          },
+          "events": 12,
+          "threshold": 0.5
+        }
+      ]
+    }
+  ],
+  "warnings": []
+}
