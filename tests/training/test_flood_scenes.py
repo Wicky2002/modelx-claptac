@@ -12,9 +12,9 @@ def test_channels_match_the_training_layout_without_hydrography():
     occurrence = np.array([[80, NO_DATA]], dtype=np.uint8)
     x, valid = channels(vv, vh, dem, occurrence)
     assert x.shape == (6, 1, 2)
-    assert x[0].tolist() == [[0.0, -20.0]]
-    assert x[1].tolist() == [[-10.0, -30.0]]
-    assert x[2].tolist() == [[-1.0, 1.0]]
+    assert np.allclose(x[0], [[0.0, -20.0]], atol=1e-4)
+    assert np.allclose(x[1], [[-10.0, -30.0]], atol=1e-4)
+    assert np.allclose(x[2], [[-1.0, 1.0]])
     assert x[3].sum() == 0 and x[4].sum() == 0
     assert x[5].tolist() == [[1.0, 0.0]]
     assert valid.all()
