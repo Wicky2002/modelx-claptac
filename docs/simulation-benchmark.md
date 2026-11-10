@@ -1,6 +1,6 @@
 # ATLAS simulation benchmark
 
-Run ten synthetic response exercises against the actual local A1–A9 system. Each task gets a fresh runtime, simulated clock, policy engine, COP, planner and local action executors. Results never enter the live responder database. The benchmark runs without API keys, network access or radio hardware.
+Run ten synthetic response exercises against the actual local system (A1–A9 respond; A10 is present but has no model to watch in these tasks). Each task gets a fresh runtime, simulated clock, policy engine, COP, planner and local action executors. Results never enter the live responder database. The benchmark runs without API keys, network access or radio hardware.
 
 ## Run and inspect
 
@@ -110,7 +110,7 @@ The full accepted list is in `task.schema.json` (`$defs.Expectation.properties.m
 - `integrity.ledger_valid`, `integrity.execution_errors`, `integrity.unsafe_executions`: universal integrity checks.
 - `timing.execution_p95_ms`: measured span duration percentile across handler and executor invocations. Hardware/load affect it; it is not total incident response time.
 
-`metrics.agent_activity` also records invocation counts. Coverage means an agent executed; some handlers correctly emit no output. All nine agents are exercised across the suite; no claim is made that each task must execute every agent.
+`metrics.agent_activity` also records invocation counts. Coverage means an agent executed; some handlers correctly emit no output. All nine response agents (A1–A9) are exercised across the suite; no claim is made that each task must execute every agent.
 
 ## Files and persistence
 

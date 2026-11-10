@@ -20,6 +20,8 @@ back to their rules when no trained weights are loaded.
 
 ## Things to know
 
+- **Sleep.** A free Space sleeps after 48 hours with no visitors. `.github/workflows/keep-space-awake.yml`
+  opens it every 6 hours to prevent that; change the address in it if you deploy elsewhere.
 - **Storage resets** when the Space restarts or sleeps. That's fine for a demo. For data that survives
   restarts, add persistent storage in the Space settings and set the Space variable
   `DATABASE_URL=sqlite:////data/atlas.db`.

@@ -132,12 +132,13 @@ Generated from the registry, so a card cannot disagree with what was registered:
 python -m atlas.learning.cards --database data/atlas.db --out outputs/model-cards
 ```
 
-No cards are committed because no real model is registered yet.
+No cards are committed. The trained versions are registered as candidates when the API starts with
+`ATLAS_REGISTER_TRAINED_MODELS=1` (`docs/model-registry.md`), so cards can be generated from that database.
 
 ## Still to do
 
-1. Write and register the model wrappers described in `docs/model-registry.md`, then run the replay with
-   them, gating radar scenes by availability.
+1. Write the wrappers that load the trained weights and bind them to `predict()` (the versions are
+   already registered as candidates), then run the replay with them, gating radar scenes by availability.
 2. A hand-checked set of report labels, before any claim about report understanding.
 3. Spatial agreement needs independently documented flood extents. Gauge timing does not count (§9).
 4. Find a department record for the 10.21 m peak.

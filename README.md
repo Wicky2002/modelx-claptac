@@ -1,7 +1,9 @@
 # ATLAS — Autonomous Triage, Logical Agentic System
 
 > **Team ClapTac** · General Sir John Kotelawala Defence University
-> CodeSplash '26 Agentic AI Phase · Theme 3: AI Disaster Response Coordinator
+> ModelX 2.0 · Phase 2: AI Disaster Response Coordinator
+>
+> **Try it online:** <https://huggingface.co/spaces/Wicky2002/atlas> (no sign-in, nothing to install)
 
 ATLAS helps a disaster-management office run the first hours of a flood, landslide or earthquake in
 Sri Lanka. It watches river gauges, rainfall, soil moisture, slope sensors, earthquake reports and
@@ -24,11 +26,11 @@ Ditwah at Ratnapura, November 2025) can be replayed as practice drills.
 
 **Prerequisites:** Docker with Compose v2: [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 on Windows or macOS, or Docker Engine with the compose plugin on Linux. Nothing else: no Python,
-Node, database, AI key or hardware is needed. About 3 GB of disk for the image.
+Node, database, AI key or hardware is needed. About 1 GB of disk for the image.
 
 ```bash
-git clone https://github.com/codesplash26-ai/team-claptac.git
-cd team-claptac
+git clone https://github.com/Wicky2002/modelx-claptac.git
+cd modelx-claptac
 docker compose up --build
 ```
 
@@ -115,6 +117,7 @@ plain language. The second is for the people building and checking the system.
 | Page | What it is for |
 |---|---|
 | **Overview** | What is happening now, and what needs you: open incidents, decisions waiting, missions, sensors against their danger lines, the latest situation report. |
+| **Incidents** | Each incident's assessment: who is at risk, what has been planned, and the gaps still open in the response. |
 | **Map** | A live 3D view of the area: streets or satellite, hills in 3D, live rain radar, roads coloured by how likely they are to be passable, evacuation routes, shelters, teams and sensors. Click anything to follow it. A guided tour flies through the situation, and a fly-along follows an evacuation route. |
 | **Decisions** | Actions ATLAS will not take without a person: what it wants to do, why, and why it needs you. Approve or reject; your name is recorded. |
 | **Alerts & reports** | Public alerts that went out (Sinhala, Tamil, English, and a standard CAP file for warning systems) and the situation reports for the operations room. |
@@ -124,8 +127,9 @@ plain language. The second is for the people building and checking the system.
 
 **For technical staff** (collapsed by default): runs and traces, the event timeline, the agent graph,
 the agents (with pause and resume), AI advice with evidence, automatic evaluations, ten benchmark
-exercises, the playground (what-if and red team), metrics, the safety rules, the audit log, data
-sources and AI model settings.
+exercises, the playground (what-if and red team), metrics, the safety rules, the audit log,
+**Data & history** (data sources and the training datasets, with their class balance and evaluation),
+**Model review** (each trained model's metrics, drift and promotion history) and AI model settings.
 
 A command line drives the same API:
 
@@ -150,12 +154,15 @@ flowchart TB
   subgraph FEEDS["Data feeds and reports"]
     REAL["Irrigation Dept gauges · Open-Meteo<br/>USGS earthquakes (live watcher)"]
     REP["Official warnings · field reports"]
+    SAR["Sentinel-1 radar scenes"]
   end
   GW -- "HTTP or MQTT" --> INGEST
   NODE -. "MQTT (within Wi-Fi)" .-> INGEST
   REAL --> INGEST
   REP --> INGEST
+  SAR --> INGEST
   INGEST["Ingest API"] --> A1
+  INGEST -- "radar scene" --> A2
 
   subgraph AGENTS["Agents on one event bus (every hand-off recorded)"]
     A1["A1 Sentinel<br/>checks, de-duplicates, scores:<br/>flood · landslide · earthquake"]
@@ -167,7 +174,16 @@ flowchart TB
     A6["A6 Logistics"]
     A1 -- trigger --> A2 --> A3
     A3 --> A5 & A4 & A7 & A6
+    A2 -- "flooded roads" --> A4
   end
+
+  subgraph LEARN["Trained models, through the model registry"]
+    RC["Report classifier<br/>keyword rules + XLM-R"]
+    RF["Radar flood model<br/>three U-Nets"]
+    A10["A10 Data & Learning<br/>watches drift and metrics"]
+  end
+  RC -. "hazard scores for field reports" .-> A1
+  RF -. "which roads are under water" .-> A2
 
   subgraph CB["Control boundary"]
     PE["Policy engine"] --> GWY["Action Gateway"]
@@ -177,6 +193,7 @@ flowchart TB
   HUMAN -- approve --> GWY
   GWY --> A8["A8 Dispatch<br/>missions to teams"]
   GWY --> A9["A9 Public alerts & reports<br/>Sinhala · Tamil · English · CAP"]
+  A10 -- "promote or roll back a model:<br/>always a person's decision" --> GWY
 
   subgraph MEMORY["Shared state"]
     LEDGER[("Ledger<br/>append-only, hash-chained")]
@@ -204,6 +221,14 @@ flowchart TB
   roads with elevation), shelter placement (OR-Tools CP-SAT), priorities and risk levels are
   deterministic and auditable. The AI model, when one is configured, only advises and writes text,
   and runs outside the decision path.
+- **Trained models only inform, and only once a person has promoted them.** The radar flood model
+  tells A2 which roads are under water, so A4's routes avoid them; it can close a road but never
+  lower a risk level, so the gauge warnings always hold. The report classifier checks whether a
+  field report's text agrees with its hazard; agreement raises A1's confidence in the report a
+  little, like one corroborating source. No model can raise or hold back an alarm. A model is
+  registered as a candidate, runs in shadow, and goes live only with human approval. With no live
+  model, the agents use their tested rules. The Docker image registers both trained models as
+  candidates, so they appear under **Model review**; their weights are not shipped in the image.
 - **The system replans** when new evidence arrives, within a bounded number of retries, then
   escalates to a person instead of looping.
 
@@ -217,26 +242,40 @@ mission, and closing a major road. A missing or malformed detail counts as high-
 
 | Area | What it does | Read more |
 |---|---|---|
-| **Agents A1–A9** | The full loop above for floods, landslides and earthquakes, persistent across restarts, with per-incident state and bounded replanning. | [orchestration](docs/orchestration.md) |
+| **Agents A1–A10** | The full loop above for floods, landslides and earthquakes, persistent across restarts, with per-incident state and bounded replanning. A10 watches the trained models. | [orchestration](docs/orchestration.md) |
+| **Trained models** | A radar flood model (three U-Nets on Sentinel-1, trained on MMFlood) and a report classifier (keyword rules and a fine-tuned XLM-R), each scored once on a held-out test set. Weights are kept outside git. | [evaluation](docs/evaluation.md) |
+| **Model registry** | Every model version with its data, metrics and threshold; candidate → shadow → live, where live needs a person's approval, with one-step rollback. Every prediction is logged. | [model registry](docs/model-registry.md) |
 | **Control boundary** | Deny-by-default policy, per-agent identity, approvals, refusal of plans built on out-of-date information, idempotent execution, hash-chained ledger. | [control boundary](docs/control-boundary.md) |
 | **Knowledge graph and ontology** | A typed world graph of roads, junctions, shelters, gauges, missions, groups and incidents. It rejects claims about things that do not exist, and answers "what depends on this road?". | [knowledge graph](docs/knowledge-graph.md) |
 | **Intelligence** | Advice after each planning round, questions in plain words and field-report extraction. Every claim is checked against recorded evidence, and sentences naming unknown places are flagged. Works offline; OpenAI or Anthropic can be configured. | [intelligence](docs/intelligence.md) |
 | **Real data** | River, rainfall and soil sources with an offline cache, plus history for earthquakes, tsunami and drought. Two replays of Cyclone Ditwah at Ratnapura from real records. | [data and hazards](docs/data-and-hazards.md) |
 | **Field sensors and LoRa** | Raspberry Pi sensor nodes (river level, rain, soil, slope tilt) send over MQTT, or over a LoRa radio link (SX1278, 433 MHz) where there is no mobile signal. The gateway checks each frame's signature, drops repeats and forwards the same sensor readings; its link health (signal, messages, gaps) shows on the console. A mock radio for demos. | [hardware](hardware/README.md), [LoRa](hardware/lora/README.md) |
 | **Public alerts** | CAP 1.2 alerts from fixed, checked phrasing in Sinhala, Tamil and English. | `atlas/agents/a9_comms.py` |
-| **Observability** | Every incident is a trace (OpenTelemetry model, OTLP export); an event timeline; about eighteen automatic evaluators, with the safety-critical ones gating CI. | [manager API](docs/manager_openapi.json) |
-| **Testing tools** | A red-team suite (16 attempts to break the rules), what-if replays, ten seeded benchmark exercises, and the A/B/C routing evaluation. | [benchmarks](docs/simulation-benchmark.md) |
+| **Observability** | Every incident is a trace (OpenTelemetry model, OTLP export); an event timeline; eighteen automatic evaluators, with the safety-critical ones gating CI. | [manager API](docs/manager_openapi.json) |
+| **Testing tools** | A red-team suite (21 attempts to break the rules), what-if replays, ten seeded benchmark exercises, and the A/B/C routing evaluation. | [benchmarks](docs/simulation-benchmark.md) |
 | **Access and audit** | Named permissions per route; roles admin, commander, developer, ai_lead, platform_engineer, viewer; every change is audited automatically, never with a secret. | `.env.example` |
 
 ### Results we can reproduce
 
 | Check | Result | Command |
 |---|---|---|
-| Automated tests | 1,049 pass | `pytest` |
-| Red team: attempts to bypass the rules | 16 of 16 handled correctly | Practice drills → Test the safety rules |
+| Automated tests | 1,212 pass | `pytest` |
+| Red team: attempts to bypass the rules | 21 of 21 handled correctly | Practice drills → Test the safety rules |
 | Benchmark exercises (10 tasks × 3 seeds) | 30 of 30 pass | `python -m atlas.benchmark run --seeds 42,43,44` |
 | Proposal's routing results table | 24 of 24 numbers reproduced | `python -m eval.run_abc` |
 | Safety evaluators on a Ditwah replay | 34 of 34 checks pass, 0 critical failures | Technical → Evaluations |
+
+**Trained models**, each scored once on a held-out test set ([details](docs/evaluation.md)):
+
+| Model | Test set | Result | Baseline |
+|---|---|---|---|
+| Radar flood (three U-Nets) | MMFlood, 34 unseen events | mean event F1 **0.340**, pixel F1 0.497, IoU 0.330 | VV threshold: 0.215, 0.301, 0.177 |
+| Report reading (XLM-R) | 770 disaster-news articles | location sentences F1 **0.948**, impact sentences F1 **0.988** | keyword rules: 0.648, 0.657 |
+| Hazard type | same | keyword rules macro-F1 **0.866** beat XLM-R's 0.667, so the hybrid uses the rules | |
+
+The report labels look machine-generated, so those scores measure agreement with the labelling rules.
+On Ratnapura the radar model does not separate flood from the dry-season baseline
+([why](docs/ratnapura-sentinel1.md)).
 
 Numbers on the benchmark and drills come from real agents running on synthetic or replayed data with
 scripted human and field responses. They show the software behaves as designed; they are not a
@@ -252,13 +291,13 @@ gate. Where we changed the technology, this is why:
 
 | Proposal | Built | Why |
 |---|---|---|
-| Six agents | Nine agents plus a control boundary | Planning split into evacuation, triage, logistics and shelter, each checkable on its own (the proposal's section 11 anticipated this). |
+| Six agents | Ten agents plus a control boundary | Planning split into evacuation, triage, logistics and shelter, each checkable on its own (the proposal's section 11 anticipated this). A10 watches the trained models. |
 | Flask + Folium dashboard | FastAPI + a React console with a MapLibre 3D map; the Folium responder page is still at `/dashboard` | Typed API contracts, live updates and a map usable by non-technical staff. |
 | RDFLib / OWL ontology | A YAML ontology validated at load time, over a NetworkX world graph | The same checks (types, relations, units, evidence) with fewer moving parts; migration to a graph store remains possible. |
 | LangGraph orchestration | A small asyncio event bus with recorded causes | The proposal named a custom orchestrator as the fallback. Ours makes every hand-off persistent and replayable, which the audit trail needs. |
 | LLM on the reasoning path | Deterministic tools decide; the AI model advises and writes text, checked against records | Works with no internet or key, and a model error cannot move a vehicle. |
 | Vector database | Not needed yet | Reports are short and structured enough to extract directly. |
-| — | LoRa field link, real Ditwah replays, red team, benchmarks, 3D map | Added during development. |
+| — | LoRa field link, real Ditwah replays, red team, benchmarks, 3D map, trained radar and report models, model registry | Added during development. |
 
 ---
 
@@ -285,22 +324,25 @@ sensors) still draw.
 ```
 atlas/
   core/          events (team contract), event bus, COP, config
-  agents/        A1 Sentinel … A9 Comms
+  agents/        A1 Sentinel … A10 Data & Learning
   orchestration/ A3's reconciliation and planning helpers
   control/       policy engine, Action Gateway, approvals
   knowledge/     ontology, world graph, entity guard, evidence index
   intelligence/  advisor, questions, extraction, providers and settings
   ingest/        sensors (MQTT/HTTP), LoRa gateway, scenario replayer
-  datasets/      real data adapters and cache
+  datasets/      real data adapters, dataset cards and cache
+  learning/      model registry, predict(), model contracts, the trained versions
   manager/       registry, traces, evaluations, access, audit, CLI
   benchmark/     seeded benchmark exercises
   api/           FastAPI routes
   dashboard/     developer views and the built console (static/manager)
 frontend/        the console (React + TypeScript + MapLibre)
+training/        training code: radar flood, report reading, sensor forecasting
 hardware/        Raspberry Pi node, LoRa node and gateway
 config/          policy.yaml, ontology.yaml, sentinel.yaml, reasoning.yaml
-data/            road networks, scenarios, reference data, benchmarks
-eval/            A/B/C routing evaluation
+data/            road networks, scenarios, reference data, benchmarks, dataset splits, model-review data
+eval/            A/B/C routing evaluation, end-to-end drill check
+deploy/          Hugging Face Space
 docs/            design of each component, data sources, API contract
 tests/
 ```
@@ -309,18 +351,26 @@ tests/
 
 | Area | Built by | Read more |
 |---|---|---|
-| Field hardware and the LoRa link | Hasindu Viduranga | [hardware](hardware/README.md), [LoRa](hardware/lora/README.md) |
-| Console and map, data sources, control boundary, manager, integration | Dinuka Wickramasinghe | [control boundary](docs/control-boundary.md), [data and hazards](docs/data-and-hazards.md) |
-| Platform, Sentinel, orchestration, intelligence, benchmarks | Aeshan Rosa | [platform](docs/reasoning-integration.md), [orchestration](docs/orchestration.md), [intelligence](docs/intelligence.md), [benchmarks](docs/simulation-benchmark.md) |
-| Routing, shelters, logistics, ontology and knowledge graph | Sumudu Ratnayake | [routing](docs/routing-integration.md), [knowledge graph](docs/knowledge-graph.md) |
+| Field hardware, the LoRa link, sensor drivers and the bench replay | Hasindu Viduranga | [hardware](hardware/README.md), [LoRa](hardware/lora/README.md) |
+| Datasets and splits, the radar flood and report models, the Ratnapura radar study, the sensor forecasting study; the first console and map, data sources, control boundary, manager, integration and hosting | Dinuka Wickramasinghe | [evaluation](docs/evaluation.md), [Sentinel-1 at Ratnapura](docs/ratnapura-sentinel1.md), [Mawiongrim forecast](docs/mawiongrim-forecast.md), [control boundary](docs/control-boundary.md), [data and hazards](docs/data-and-hazards.md) |
+| Platform, Sentinel, orchestration, intelligence, benchmarks; the console's information labels, map rework, console audit, and the data and model-review pages | Aeshan Rosa | [platform](docs/reasoning-integration.md), [orchestration](docs/orchestration.md), [intelligence](docs/intelligence.md), [benchmarks](docs/simulation-benchmark.md) |
+| Routing, shelters, logistics, ontology and knowledge graph; the model registry, connecting models to the agents, A10 Data & Learning, and evaluation | Sumudu Ratnayake | [routing](docs/routing-integration.md), [knowledge graph](docs/knowledge-graph.md), [model registry](docs/model-registry.md) |
+
+## Hosting
+
+The demo runs on Hugging Face Spaces at <https://huggingface.co/spaces/Wicky2002/atlas>, from the same
+Docker image. To deploy your own copy, see [deploy/huggingface](deploy/huggingface/README.md). A
+scheduled GitHub Actions workflow opens the Space every 6 hours so it does not go to sleep.
 
 ## Development
 
 ```bash
 pytest                                        # the whole suite
+python eval/e2e_drill.py http://localhost:8000  # the Ditwah drill end to end against a running app
 ruff check atlas tests
 cd frontend && npm install && npm run build   # rebuilds the console into atlas/dashboard/static/manager/
 python -m atlas.manager.openapi               # after changing a manager endpoint (a test checks it)
+pip install -r training/requirements.txt      # training code (needs a GPU for the flood models)
 ```
 
 ## Team

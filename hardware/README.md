@@ -34,6 +34,7 @@ Sensors ─► Raspberry Pi (sensor_node.py) ─► MQTT broker ─► atlas/ing
 | | SDA / SCL | GPIO2 (pin 3) / GPIO3 (pin 5) |
 | ADS1115 | VDD / GND / SDA / SCL | 3.3V / GND / GPIO2 / GPIO3 (shares the I2C bus) |
 | Soil sensor | AOUT | ADS1115 A0 |
+| MPU6050 | VCC / GND / SDA / SCL | 3.3V / GND / GPIO2 / GPIO3 (shares the I2C bus, address 0x68) |
 
 > The Pi's GPIO pins are **3.3V only**. Connecting a 5V echo line directly can damage the Pi.
 
@@ -41,11 +42,11 @@ Sensors ─► Raspberry Pi (sensor_node.py) ─► MQTT broker ─► atlas/ing
 
 ```bash
 sudo raspi-config                     # Interface Options → enable I2C
-git clone <repo-url> ~/team-claptac && cd ~/team-claptac/hardware/pi
+git clone https://github.com/Wicky2002/modelx-claptac.git ~/modelx-claptac && cd ~/modelx-claptac/hardware/pi
 python -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 cp config.example.yaml config.yaml    # set node_id, location, broker IP, sensors
-i2cdetect -y 1                        # BME280 should appear at 0x76 (or 0x77)
+i2cdetect -y 1                        # BME280 at 0x76 (or 0x77), MPU6050 at 0x68, ADS1115 at 0x48
 python sensor_node.py --config config.yaml
 ```
 
