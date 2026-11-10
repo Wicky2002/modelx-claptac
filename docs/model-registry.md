@@ -33,6 +33,16 @@ registration: register a new version instead.
 
 Making a version live retires the previous live version in the same transaction.
 
+## The trained versions
+
+`atlas/learning/trained.py` holds the records of the models we trained and scored: two `radar_flood`
+versions (`d2-ensemble-3`, the final three-U-Net ensemble, and `d2-unet-r34`) and two
+`report_classifier` versions (`d4-hybrid` and `d4-xlmr`), with their datasets, held-out metrics and
+thresholds. With `ATLAS_REGISTER_TRAINED_MODELS=1`, which the Dockerfile sets, the API registers them
+as candidates at start-up, so **Model review** lists them. Their `artifact_uri` is
+`not-deployed:weights-kept-outside-git`: the weights are not in the image, so no version is bound to
+`predict()` and the agents keep their rules.
+
 ## A10 Data & Learning, promotion and rollback
 
 `system.learning` (A10, `atlas/agents/a10_data_learning.py`) has read-only views of the registry and

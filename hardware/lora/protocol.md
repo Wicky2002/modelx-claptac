@@ -10,7 +10,7 @@ straight onto the existing `SensorReading`, so nothing downstream changes.
 ## Radio settings (starting point, to be tuned in the range test)
 | Setting | Start with | Note |
 |---|---|---|
-| Frequency | 433 MHz band, exact channel TBD | confirm what is permitted locally |
+| Frequency | 433.000 MHz by default (`frequency_hz` in both config files) | confirm what is permitted locally |
 | Spreading factor / bandwidth / coding rate | SF9 / 125 kHz / 4:5 | trade range against airtime |
 | Sync word | private (0x12) | keeps our frames apart from LoRaWAN traffic |
 | Preamble | 8 symbols | |
