@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "profiles": [
+    "mmflood-train-profile.json",
+    "mmflood-val-profile.json",
+    "mmflood-test-profile.json"
+  ],
+  "evaluations": [
+    {
+      "path": "flood-final-report-test.json",
+      "dataset": "mmflood",
+      "dataset_version": null,
+      "model_version": "unet-v2-w1 + unet-v2-w2 + unet-r50, slope cutoff 10 degrees",
+      "seed": null,
+      "generated_at": "2026-11-10T06:49:00+00:00",
+      "source": "D2 final combination, test split scored once (training/flood/combine.py)"
+    },
+    {
+      "path": "flood-unet-report-val.json",
+      "dataset": "mmflood",
+      "dataset_version": null,
+      "model_version": "unet-v2-w1",
+      "seed": null,
+      "generated_at": null,
+      "source": "D2 single U-Net, validation split (training/flood/evaluate.py)"
+    }
+  ]
+}
