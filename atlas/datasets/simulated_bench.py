@@ -1,6 +1,6 @@
-"""Generate a repeatable synthetic tabletop sensor session for the H3 replay workflow.
+"""Generate a repeatable simulated tabletop sensor session for the H3 replay workflow.
 
-Run: python -m atlas.datasets.synthetic_bench --output data/scenarios/ratnapura_synthetic_bench.json
+Run: python -m atlas.datasets.simulated_bench --output data/scenarios/ratnapura_simulated_bench.json
 These values are simulated; use ``bench_recording`` for measurements from real hardware.
 """
 
@@ -16,7 +16,7 @@ from pathlib import Path
 from atlas.datasets.to_scenario import readings_to_scenario
 from atlas.ingest.sensors import SensorReading
 
-NAME = "ratnapura-synthetic-bench"
+NAME = "ratnapura-simulated-bench"
 AREA_ID = "ratnapura-demo-river"
 SEED = 1709
 START = datetime(2026, 11, 10, 9, 0, tzinfo=timezone.utc)
@@ -50,7 +50,7 @@ def build_scenario() -> dict:
                 SensorReading(
                     node_id=node_id,
                     sensor_id=sensor_id,
-                    measurement_id=f"synthetic-{sensor_id}-{seconds:03d}",
+                    measurement_id=f"simulated-{sensor_id}-{seconds:03d}",
                     type=kind,
                     value=value,
                     unit=unit,
@@ -62,11 +62,11 @@ def build_scenario() -> dict:
 
     scenario = readings_to_scenario(readings, NAME)
     scenario.update(
-        title="Ratnapura tabletop sensors (synthetic exercise)",
+        title="Ratnapura tabletop sensors (simulated exercise)",
         hazard="landslide",
         area_id=AREA_ID,
         real=False,
-        recording_kind="synthetic_bench",
+        recording_kind="simulated_bench",
         source="deterministic simulation; no hardware measurements",
         seed=SEED,
         story=(
@@ -78,7 +78,7 @@ def build_scenario() -> dict:
             key: {"min": min(values), "max": max(values)} for key, values in sorted(ranges.items())
         },
         assumptions=[
-            "All measurements are synthetic and are not evidence of a real disaster or hardware performance.",
+            "All measurements are simulated and are not evidence of a real disaster or hardware performance.",
             "Water uses the 0–40 cm tabletop scale in data/reference/sensor_map.yaml, not river depth.",
             "Tilt is degrees from the installed angle; the 2-degree A1 threshold is a demo value.",
             "The coordinates and area ID are the existing Ratnapura demo mapping, not a physical bench site.",
@@ -94,7 +94,7 @@ def main() -> None:
     scenario = build_scenario()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(scenario, indent=2) + "\n", encoding="utf-8")
-    print(f"wrote {args.output} ({len(scenario['events'])} synthetic readings)")
+    print(f"wrote {args.output} ({len(scenario['events'])} simulated readings)")
 
 
 if __name__ == "__main__":
