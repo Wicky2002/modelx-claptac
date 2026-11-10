@@ -1,0 +1,6 @@
+# Training only. The ATLAS app and its Docker image do not need these.
+# Install PyTorch for your GPU first: https://pytorch.org/get-started/locally/
+torch>=2.5
+torchvision>=0.20
+rasterio>=1.4
+numpy>=1.26
