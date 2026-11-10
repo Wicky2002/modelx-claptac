@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "11-uncontested-field-report",
+  "title": "Uncontested field report reaches the classifier",
+  "description": "A single field report with text and no conflicting measurement, so the report classifier is actually called. A low level must not raise an alarm, whatever the classifier says.",
+  "tags": [
+    "synthetic",
+    "models"
+  ],
+  "assumptions": [
+    "Synthetic exercise. Run with --stand-in-models, whose classifier is untrained and agrees with every report."
+  ],
+  "initial": {},
+  "steps": [
+    {
+      "id": "resident-report",
+      "kind": "report",
+      "at_seconds": 10,
+      "value": 5,
+      "text": "Simulated resident says water is on the road near the river."
+    },
+    {
+      "id": "end",
+      "at_seconds": 60,
+      "kind": "checkpoint"
+    }
+  ],
+  "expectations": [
+    {
+      "metric": "events.observation_validated",
+      "operator": "gte",
+      "value": 1,
+      "reason": "The report must be validated."
+    },
+    {
+      "metric": "events.trigger",
+      "operator": "eq",
+      "value": 0,
+      "reason": "A classifier agreeing with a low reading must not raise an alarm."
+    }
+  ]
+}

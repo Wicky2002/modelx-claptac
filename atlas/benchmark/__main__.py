@@ -21,6 +21,11 @@ def main():
     parser.add_argument(
         "--step-delay-ms", type=int, default=0, choices=range(0, 1001), metavar="0..1000"
     )
+    parser.add_argument(
+        "--stand-in-models",
+        action="store_true",
+        help="Run with untrained stand-in models in the loop (a system check, not a model score)",
+    )
     args = parser.parse_args()
     if args.command == "schema":
         import json
@@ -53,6 +58,7 @@ def main():
             folder,
             random_enabled=not args.no_random,
             step_delay_ms=args.step_delay_ms,
+            stand_in_models=args.stand_in_models,
         )
     )
     print(f"{result['passed']}/{result['total']} cases passed; state={result['state']}")
