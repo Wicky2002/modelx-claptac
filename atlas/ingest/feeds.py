@@ -35,6 +35,32 @@ class FeedReport(BaseModel):
         return value
 
 
+class FloodScene(BaseModel):
+    """A processed radar scene is ready for an area. ``timestamp`` is the acquisition time."""
+
+    kind: Literal["flood_scene"] = "flood_scene"
+    scene_id: str = Field(min_length=1)
+    area_id: str = Field(min_length=1)
+    timestamp: datetime
+
+    @field_validator("timestamp")
+    @classmethod
+    def aware(cls, value):
+        if value.tzinfo is None:
+            raise ValueError("Scene timestamp must include timezone")
+        return value
+
+
+def scene_event(scene: FloodScene) -> Event:
+    return Event(
+        id=sha256(f"flood_scene:{scene.scene_id}:{scene.area_id}".encode()).hexdigest(),
+        type=EventType.FLOOD_SCENE,
+        source="radar_flood_layer",
+        created_at=scene.timestamp,
+        payload=scene.model_dump(mode="json"),
+    )
+
+
 def to_event(report: FeedReport) -> Event:
     return Event(
         id=sha256(f"{report.source}:{report.report_id}".encode()).hexdigest(),

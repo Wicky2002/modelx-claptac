@@ -10,6 +10,7 @@ from atlas.core.config import SentinelConfig
 from atlas.core.events import Belief, Event, EventType, Observation, Trigger
 from atlas.ingest.feeds import FeedReport
 from atlas.ingest.sensors import SensorReading
+from atlas.learning.contracts import REPORT_CLASSIFIER, report_supports
 from atlas.memory.evidence_store import EvidenceStore
 from atlas.reasoning import PlanningRequest
 from atlas.reasoning.tracing import record_result
@@ -29,8 +30,9 @@ class Sentinel(Agent):
     name = "a1_sentinel"
     subscribes_to = (EventType.OBSERVATION,)
 
-    def __init__(self, bus, cop, ledger, *, config=None, planner=None, clock=None):
+    def __init__(self, bus, cop, ledger, *, config=None, planner=None, clock=None, inference=None):
         super().__init__(bus, cop, ledger)
+        self.inference = inference
         self.config = config or SentinelConfig()
         if any(not 0 <= weight <= 1 for weight in self.config.source_reliability.values()):
             raise ValueError("Source reliability must be in [0,1]")
@@ -75,6 +77,21 @@ class Sentinel(Agent):
             payload=payload,
         )
 
+    def _with_model_support(self, text, hazard, confidence, evidence_ids):
+        """Raise a field report's confidence if the classifier agrees, as one corroborating source.
+
+        Only the reported observation changes. Triggers keep the rule-based confidence and evidence,
+        so a model can neither raise an alarm on its own nor hold one back.
+        """
+        if not text or self.inference is None:
+            return confidence, evidence_ids
+        prediction = self.inference.predict(
+            REPORT_CLASSIFIER, {"text": text}, caller=self.name, evidence_ids=evidence_ids
+        )
+        if not report_supports(prediction, hazard):
+            return confidence, evidence_ids
+        return min(0.99, confidence + 0.1), [*evidence_ids, f"prediction:{prediction.prediction_id}"]
+
     async def handle(self, event):
         cfg, now = self.config, self.clock()
         evidence_id = self.evidence.put({"source": event.source, "payload": event.payload})
@@ -89,7 +106,7 @@ class Sentinel(Agent):
                 )
             ]
 
-        warned_hazard = None
+        warned_hazard, field_text = None, ""
         try:
             if event.payload.get("kind") == "sensor":
                 reading = SensorReading.model_validate(event.payload)
@@ -125,6 +142,7 @@ class Sentinel(Agent):
                 )
                 source = report.source
                 warned_hazard = report.hazard
+                field_text = report.text if report.kind == "field_report" else ""
                 reliability = cfg.source_reliability.get(
                     source, 0.9 if report.kind == "official_warning" else 0.5
                 )
@@ -204,6 +222,14 @@ class Sentinel(Agent):
             "INSERT INTO observations VALUES (?,?,?,?,?,?,?,?)",
             (identity, area, attribute, source, stamp, value, reliability, evidence_id),
         )
+        reported_confidence, reported_evidence = confidence, evidence_ids
+        if not conflict:  # a classifier reading the text cannot settle contradicting measurements
+            reported_confidence, reported_evidence = self._with_model_support(
+                field_text,
+                warned_hazard or HAZARD_OF.get(attribute, "flood"),
+                confidence,
+                evidence_ids,
+            )
         observation = Observation(
             observation_id=identity,
             area_id=area,
@@ -213,16 +239,16 @@ class Sentinel(Agent):
             observed_at=observed,
             received_at=now,
             source=source,
-            confidence=confidence,
-            evidence_ids=evidence_ids,
+            confidence=reported_confidence,
+            evidence_ids=reported_evidence,
         )
         self.cop.put(
             Belief(
                 subject="area:" + area,
                 attribute=attribute,
                 value=value,
-                confidence=confidence,
-                provenance=evidence_ids,
+                confidence=reported_confidence,
+                provenance=reported_evidence,
                 updated_at=observed,
                 ttl_seconds=cfg.freshness_seconds,
             )

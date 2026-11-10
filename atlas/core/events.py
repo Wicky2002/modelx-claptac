@@ -26,6 +26,7 @@ class EventType(str, Enum):
     INFORMATION_GAP = "information_gap"
     REASONING_COMPLETED = "reasoning_completed"
     OBSERVATION = "observation"  # A1 -> COP
+    FLOOD_SCENE = "flood_scene"  # radar scene ready -> A2
     TRIGGER = "trigger"  # A1 -> A3
     CONFLICT_FLAG = "conflict_flag"  # A1 -> A3
     RISK_UPDATE = "risk_update"  # A2 -> COP / A5

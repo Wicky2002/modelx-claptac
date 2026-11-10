@@ -33,6 +33,7 @@ class Runtime:
             config=self.settings.sentinel,
             planner=Planner(self.settings.reasoning),
             clock=self.clock,
+            inference=self.inference,
         )
         self.register(self.sentinel)
         self._mqtt_stop = threading.Event()

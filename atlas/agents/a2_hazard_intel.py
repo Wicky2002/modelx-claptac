@@ -8,8 +8,12 @@ Inputs
                                 OBSERVATION: that would bypass the Sentinel's checks.
     TRIGGER (A1)                a threshold crossing; makes sure the area is at least "warning".
     CONFLICT_FLAG (A1)          contradicting reports; the risk is kept but marked uncertain.
+    FLOOD_SCENE                 a processed radar scene; the live radar model says which roads are
+                                under water. With no usable model nothing is emitted and the gauge
+                                rules carry on. It never changes a risk level, so warning floors hold.
 
 Outputs
+    RISK_UPDATE                 ``{"kind": "road_flood_evidence", ...}``: flooded roads for A4.
     RISK_UPDATE                 ``{"kind": "hazard_risk", ...}`` when an area's level for a hazard
                                 changes (not on every reading), so downstream agents are not spammed.
                                 A4 also emits RISK_UPDATE (``kind: "road_access_changed"``); consumers
@@ -36,6 +40,8 @@ from pydantic import ValidationError
 from atlas.agents.base import Agent
 from atlas.core.config import SentinelConfig
 from atlas.core.events import Belief, Event, EventType, Observation
+from atlas.ingest.feeds import FloodScene
+from atlas.learning.contracts import RADAR_FLOOD, flooded_edges
 
 log = logging.getLogger(__name__)
 
@@ -72,6 +78,7 @@ class HazardIntel(Agent):
         EventType.OBSERVATION_VALIDATED,
         EventType.TRIGGER,
         EventType.CONFLICT_FLAG,
+        EventType.FLOOD_SCENE,
     )
 
     def __init__(
@@ -83,8 +90,10 @@ class HazardIntel(Agent):
         config: SentinelConfig | None = None,
         vulnerabilities: list[dict[str, Any]] | None = None,
         clock=None,
+        inference=None,
     ):
         super().__init__(bus, cop, ledger)
+        self.inference = inference
         self.config = config or SentinelConfig()
         self.clock = clock or (lambda: datetime.now(timezone.utc))
         profiles = vulnerabilities if vulnerabilities is not None else load_vulnerabilities()
@@ -159,7 +168,51 @@ class HazardIntel(Agent):
             return self._on_trigger(event)
         if event.type is EventType.CONFLICT_FLAG:
             return self._on_conflict(event)
+        if event.type is EventType.FLOOD_SCENE:
+            return self._on_flood_scene(event)
         return []
+
+    def _on_flood_scene(self, event: Event) -> list[Event]:
+        try:
+            scene = FloodScene.model_validate(event.payload)
+        except ValidationError:
+            log.warning("A2 ignoring malformed flood scene %s", event.id)
+            return []
+        if self.inference is None:
+            return []
+        prediction = self.inference.predict(
+            RADAR_FLOOD,
+            {"scene_id": scene.scene_id, "area_id": scene.area_id},
+            caller=self.name,
+            evidence_ids=[f"scene:{scene.scene_id}"],
+            incident_id=event.incident_id,
+        )
+        flooded = flooded_edges(prediction)
+        if not flooded:
+            return []  # the ledger already says why; dry radar is not evidence of an open road
+        return [
+            Event(
+                id=sha256(f"{event.id}:road_flood_evidence:{self.name}".encode()).hexdigest(),
+                type=EventType.RISK_UPDATE,
+                source=self.name,
+                created_at=self.clock(),
+                incident_id=event.incident_id,
+                payload={
+                    "kind": "road_flood_evidence",
+                    "area_id": scene.area_id,
+                    "scene_id": scene.scene_id,
+                    "acquired_at": scene.timestamp.isoformat(),
+                    "flooded": flooded,
+                    "model": prediction.model,
+                    "version": prediction.version,
+                    "prediction_id": prediction.prediction_id,
+                    "evidence_ids": [
+                        f"scene:{scene.scene_id}",
+                        f"prediction:{prediction.prediction_id}",
+                    ],
+                },
+            )
+        ]
 
     def _on_observation(self, event: Event) -> list[Event]:
         try:
