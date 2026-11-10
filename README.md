@@ -182,7 +182,6 @@ flowchart TB
     TR["Training and evaluation<br/>U-Nets · genetic-algorithm search<br/>XLM-R · LightGBM study"]
     DS --> TR
   end
-  TR -- "registered with data and metrics" --> LEARN
 
   subgraph LEARN["Trained models, through the model registry"]
     RC["Report classifier<br/>keyword rules + XLM-R"]
@@ -191,6 +190,7 @@ flowchart TB
   end
   RC -. "hazard scores for field reports" .-> A1
   RF -. "which roads are under water" .-> A2
+  TR -- "registered with data and metrics" --> RC & RF
 
   subgraph CB["Control boundary"]
     PE["Policy engine"] --> GWY["Action Gateway"]
