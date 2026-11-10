@@ -105,3 +105,27 @@ In `config.yaml`, replace the hardware sensors with `driver: mock` entries. They
 ## Safety
 
 Keep water well away from the Pi and the breadboard. Only the waterproof JSN-SR04T probe should be anywhere near the container.
+
+## Record a real bench session for replay (H3)
+
+On each Pi, set `recording_path: recordings/bench-node-01.jsonl` in `config.yaml`
+(use a distinct filename per node). The node appends every measured reading to
+that file before sending it; it continues recording if the network is down.
+Keep the raw JSONL files out of the repository. During one session, record dry
+and wet soil, rising water, and a gently tilted, firmly mounted slope sensor.
+
+Copy the JSONL files to the laptop, then run:
+
+```bash
+python -m atlas.datasets.bench_recording bench-node-01.jsonl bench-node-02.jsonl \
+  --name ratnapura-bench --output data/scenarios/ratnapura_bench.json
+python -m atlas.ingest.simulator data/scenarios/ratnapura_bench.json
+```
+
+The converter requires water level, soil moisture, and tilt readings from one
+`area_id`, validates units and timestamps, and reports each observed range.
+Compare those ranges with `data/reference/sensor_map.yaml` (especially the
+tabletop water level's 0–40 cm scale) and record any mismatch in the scenario
+before committing it. The scenario says `real: false` and `bench_test`: its
+measurements are real, but it is not a recorded landslide. Check that the replay
+prints an A1 trigger before marking H3 complete.
