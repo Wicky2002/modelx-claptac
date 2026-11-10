@@ -177,6 +177,12 @@ flowchart TB
     A2 -- "flooded roads" --> A4
   end
 
+  subgraph TRAIN["Offline training, each test set scored once"]
+    DS["Training datasets<br/>MMFlood · disaster-news articles<br/>Mawiongrim slope sensors"]
+    TR["Training and evaluation<br/>U-Nets · genetic-algorithm search<br/>XLM-R · LightGBM study"]
+    DS --> TR
+  end
+
   subgraph LEARN["Trained models, through the model registry"]
     RC["Report classifier<br/>keyword rules + XLM-R"]
     RF["Radar flood model<br/>three U-Nets"]
@@ -184,6 +190,7 @@ flowchart TB
   end
   RC -. "hazard scores for field reports" .-> A1
   RF -. "which roads are under water" .-> A2
+  TR -- "registered with data and metrics" --> RC & RF
 
   subgraph CB["Control boundary"]
     PE["Policy engine"] --> GWY["Action Gateway"]
@@ -265,23 +272,74 @@ mission, and closing a major road. A missing or malformed detail counts as high-
 | Proposal's routing results table | 24 of 24 numbers reproduced | `python -m eval.run_abc` |
 | Safety evaluators on a Ditwah replay | 34 of 34 checks pass, 0 critical failures | Technical → Evaluations |
 
-**Trained models**, each scored once on a held-out test set ([details](docs/evaluation.md)):
-
-| Model | Test set | Result | Baseline |
-|---|---|---|---|
-| Radar flood (three U-Nets) | MMFlood, 34 unseen events | mean event F1 **0.340**, pixel F1 0.497, IoU 0.330 | VV threshold: 0.215, 0.301, 0.177 |
-| Report reading (XLM-R) | 770 disaster-news articles | location sentences F1 **0.948**, impact sentences F1 **0.988** | keyword rules: 0.648, 0.657 |
-| Hazard type | same | keyword rules macro-F1 **0.866** beat XLM-R's 0.667, so the hybrid uses the rules | |
-
-The report labels look machine-generated, so those scores measure agreement with the labelling rules.
-On Ratnapura the radar model does not separate flood from the dry-season baseline
-([why](docs/ratnapura-sentinel1.md)).
+Trained-model results are under [Data, models and evaluation](#data-models-and-evaluation).
 
 Numbers on the benchmark and drills come from real agents running on synthetic or replayed data with
 scripted human and field responses. They show the software behaves as designed; they are not a
 field trial.
 
 ---
+
+## Data, models and evaluation
+
+### Training datasets
+
+All four are public under CC BY 4.0. Each has a dataset card (`atlas/datasets/cards/`) with its
+origin, licence, coverage, label meaning, missing values and limits, and a split file
+(`data/splits/`) so no event, article or hour appears on two sides. Raw data and weights are kept
+outside git.
+
+| Dataset | What it is | Used for | Split |
+|---|---|---|---|
+| [MMFlood](https://zenodo.org/records/6534637) | 1,748 Sentinel-1 radar tiles (VV, VH) with elevation, hydrography and flood masks, from 95 flood events in 43 countries | Radar flood model | MMFlood's own event split; test is 34 events, 386 tiles. Flood is only 4.5% of pixels |
+| [Disaster-news articles](https://ieee-dataport.org/documents/dataset-extract-event-location-and-impact-information-disaster-news-articles) | 7,692 news articles labelled with hazard type, plus which sentences give the location and the impact | Report classifier | By article, duplicates kept together; test is 770 articles |
+| [Mawiongrim landslide sensors](https://ieee-dataport.org/documents/real-time-landslide-dataset-mawiongrim-meghalaya-india) | One month of hourly rain, water level, inclinometer and tensiometer readings from one slope in Meghalaya | Sensor forecasting study | By time: 70% / 15% / 15% |
+| [AIFloodSense](https://ieee-dataport.org/documents/aifloodsense) | 470 aerial flood photos with flood masks, 64 countries | Carded and split only; no model trained on it yet | Re-split by flood name, because published test images shared events with training |
+
+### Real-world data for replays and the map
+
+| Source | Used for |
+|---|---|
+| Irrigation Department river gauges | The Ditwah replay: Ratnapura peaked at 10.21 m on 28 Nov 2025 |
+| Open-Meteo (ERA5 reanalysis) | Hourly rain and soil moisture for the replays |
+| GDACS, IBTrACS, NOAA tsunami, USGS | Hazard history, and live earthquake reports |
+| Sentinel-1 (Planetary Computer), Copernicus GLO-30 elevation, JRC permanent water | Flood layers for Ratnapura during Ditwah ([study](docs/ratnapura-sentinel1.md)) |
+| OpenStreetMap | The road network the evacuation routes run on |
+
+Every source and what we found when checking it: [data and hazards](docs/data-and-hazards.md).
+
+### Models
+
+| Model | How it was built | Connected to |
+|---|---|---|
+| **Radar flood** | Three U-Nets (two ResNet-34, one ResNet-50) averaged, inputs VV, VH, elevation and hydrography. Training settings explored with a genetic-algorithm search, scored on validation. No flood allowed on slopes over 10°. Probabilities calibrated by temperature scaling; threshold chosen on validation. | A2, on a radar scene: tells A4 which roads are under water |
+| **Report classifier** | XLM-R fine-tuned on the news articles for hazard type and for location and impact sentences, plus keyword rules. Per hazard, the hybrid keeps whichever rule scored best on validation (keywords, XLM-R, or keywords checked by XLM-R); sentences use XLM-R. | A1, on a field report: agreement raises its confidence a little |
+| **Sensor forecast** (study) | LightGBM against persistence, 1 to 6 hours ahead, on Mawiongrim. CPU only. | Not connected: the data has no landslide events ([study](docs/mawiongrim-forecast.md)) |
+
+Models enter through the [model registry](docs/model-registry.md): candidate, then shadow, then live
+only with a person's approval, with one-step rollback. A10 watches drift. Code is in `training/`.
+
+### Evaluation
+
+Every test set was scored once, after all choices were fixed on validation.
+
+| Model | Test set | Result | Baseline |
+|---|---|---|---|
+| Radar flood | MMFlood, 34 unseen events | mean event F1 **0.340**, pixel F1 0.497, IoU 0.330, calibration error 1.9% | VV threshold: 0.215, 0.301, 0.177 |
+| Report reading (XLM-R) | 770 articles | location sentences F1 **0.948**, impact sentences F1 **0.988** | keyword rules: 0.648, 0.657 |
+| Hazard type | 770 articles | keyword rules macro-F1 **0.866**; XLM-R 0.667 | |
+| Sensor forecast, 6 h | Mawiongrim, last 15% of hours | LightGBM cuts RMSE by about 20% | persistence; persistence wins at 1 h |
+
+What these results do not show:
+
+- On Ratnapura, the radar model does not separate flood from the dry-season baseline, and no pass
+  caught the flood peak ([why](docs/ratnapura-sentinel1.md)). The map treats radar there as "no
+  confident detection", not "no flood".
+- The news labels look machine-generated, so report scores measure agreement with the labelling
+  rules. English only.
+- Mawiongrim is one month at one site, so the forecast is a study, not a warning.
+
+Full results and how to reproduce them: [evaluation](docs/evaluation.md).
 
 ## Proposal and what we built
 
