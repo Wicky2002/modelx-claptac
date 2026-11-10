@@ -30,6 +30,7 @@ COPY --from=console /src/atlas/dashboard/static/manager ./atlas/dashboard/static
 # Everything the system writes goes under /app/state (a volume in compose.yaml), so the repo's bundled
 # data (road networks, scenarios, reference files) is never hidden by the volume.
 ENV DATABASE_URL=sqlite:////app/state/atlas.db \
+    ATLAS_REGISTER_TRAINED_MODELS=1 \
     ATLAS_LLM_SETTINGS_PATH=/app/state/llm-settings.json
 # UID 1000 because Hugging Face Spaces run containers as that user (deploy/huggingface/README.md).
 RUN mkdir -p /app/state /app/outputs && useradd --create-home --uid 1000 atlas \
