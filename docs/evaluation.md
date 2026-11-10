@@ -1,7 +1,8 @@
 # Evaluation
 
-**No trained model has been evaluated yet.** D2 and D4 are not merged and their weights are outside
-git, so every result here is for the rules alone or for the system running with untrained stand-ins.
+The trained models (D2 radar flood, D4 report reading) were each scored once on their own held-out test
+sets; those results are below. They have not yet been run inside the live replay, for the reasons given in
+the Ditwah table. Their weights stay outside git.
 
 To reproduce:
 
@@ -22,7 +23,7 @@ Deterministic, so no seed applies.
 | **Strict: gauge only, real speed** | 53 | 27 Nov 08:35 | water level | **21.96 h** |
 | Reanalysis-assisted: gauge + ERA5, real speed | 175 | 27 Nov 08:35 | water level | 21.96 h |
 | Demo at 240x (not a result) | 175 | 27 Nov 03:58 | rainfall | 26.57 h |
-| Rules + trained models | not run | | | no trained models yet |
+| Rules + trained models | not run in the replay | | | Would equal strict, see below |
 
 The gauge crossed 9.5 m at 06:32:58 UTC on 28 November.
 
@@ -38,6 +39,11 @@ The gauge crossed 9.5 m at 06:32:58 UTC on 28 November.
 - The 240x run shows why compressed replays are not evidence: compression changes which rule fires
   and moves the trigger by about 4.6 h.
 - This is one event at one station. It says nothing about false alarms.
+
+**Why a trained-model run would not change this row.** Models cannot raise or hold back a trigger (S2), and
+this scenario has no field reports. The first radar pass usable after the trigger is 2 Dec 00:24 UTC, four days
+after the peak, and the D3 layers for Ratnapura show no flood above the level seen on the pre-flood passes of
+14 Nov (`docs/ratnapura-sentinel1.md`). So the radar model would add no evidence before the 9.5 m crossing.
 
 **What "strict" does and does not gate**
 
@@ -87,6 +93,37 @@ runs. It is kept apart so the standard suite stays the same 10 tasks.
 The stand-in classifier agrees with every report. No benchmark task contains a radar scene, so the
 radar path is tested only in `tests/learning/test_agent_models.py`.
 
+## Trained models: held-out test results
+
+Each test set was scored once, after every choice was fixed on validation.
+
+**D2 radar flood mapping** (MMFlood test split: 34 events, 386 tiles). Three U-Nets averaged, no flood on
+slopes over 10°, threshold chosen on validation.
+
+| | VV threshold baseline | Trained model |
+|---|---|---|
+| Mean event F1 | 0.215 | **0.340** |
+| Pixel F1 | 0.301 | **0.497** |
+| Pixel IoU | 0.177 | **0.330** |
+| Calibration error (after temperature) | | 1.9% |
+
+Limits: MMFlood events are mostly lowland floods. On Ratnapura (D3) the model does not separate flood from
+the pre-flood false-alarm level, and no independent inundation map exists to check it against.
+
+**D4 report reading** (disaster-news test split, 770 English articles).
+
+| | Keyword rules | XLM-R transformer |
+|---|---|---|
+| Hazard labels, macro-F1 | **0.866** | 0.667 |
+| Location sentences, F1 | 0.648 | **0.948** |
+| Impact sentences, F1 | 0.657 | **0.988** |
+
+Limits: the labels appear to be machine-generated from keyword and gazetteer rules, so these scores
+measure agreement with the labelling rules, not report understanding. English only; no Sinhala or Tamil
+text was available.
+
+The same reports are shown on the console's Data page (`data/model-review/`).
+
 ## Model cards
 
 Generated from the registry, so a card cannot disagree with what was registered:
@@ -97,9 +134,10 @@ python -m atlas.learning.cards --database data/atlas.db --out outputs/model-card
 
 No cards are committed because no real model is registered yet.
 
-## Still to do once D2, D3 and D4 are merged
+## Still to do
 
-1. Write and register the model wrappers described in `docs/model-registry.md`.
-2. Add the rules + trained models row, gating radar scenes by availability.
+1. Write and register the model wrappers described in `docs/model-registry.md`, then run the replay with
+   them, gating radar scenes by availability.
+2. A hand-checked set of report labels, before any claim about report understanding.
 3. Spatial agreement needs independently documented flood extents. Gauge timing does not count (§9).
 4. Find a department record for the 10.21 m peak.

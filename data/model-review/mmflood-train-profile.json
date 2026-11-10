@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "dataset": "mmflood",
+  "dataset_version": null,
+  "split": "train",
+  "seed": null,
+  "generated_at": "2026-11-10T14:11:46+00:00",
+  "source": "MMFlood prepared cache (cache-v2), every tile in the split",
+  "label_unit": "pixels",
+  "labels": [
+    {
+      "label": "flood",
+      "count": 50633059
+    },
+    {
+      "label": "not flood",
+      "count": 1074271824
+    }
+  ],
+  "flood_pixels": {
+    "flood": 50633059,
+    "non_flood": 1074271824,
+    "ignored": 69546083
+  },
+  "notes": [
+    "1242 tiles. Flood is 4.5% of labelled pixels."
+  ]
+}
