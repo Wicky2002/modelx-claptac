@@ -31,7 +31,8 @@ COPY --from=console /src/atlas/dashboard/static/manager ./atlas/dashboard/static
 # data (road networks, scenarios, reference files) is never hidden by the volume.
 ENV DATABASE_URL=sqlite:////app/state/atlas.db \
     ATLAS_LLM_SETTINGS_PATH=/app/state/llm-settings.json
-RUN mkdir -p /app/state /app/outputs && useradd --create-home --uid 10001 atlas \
+# UID 1000 because Hugging Face Spaces run containers as that user (deploy/huggingface/README.md).
+RUN mkdir -p /app/state /app/outputs && useradd --create-home --uid 1000 atlas \
     && chown -R atlas /app/state /app/outputs /app/data
 USER atlas
 

@@ -5,6 +5,7 @@ laptop without a Pi attached.
 """
 from __future__ import annotations
 
+import logging
 import math
 import random
 import statistics
@@ -113,6 +114,61 @@ class SoilMoisture(Sensor):
         return [Measurement("soil_moisture", round(min(100.0, max(0.0, pct)), 1), "%")]
 
 
+def tilt_degrees(reference, current) -> float:
+    """Angle between two gravity vectors, in degrees. Independent of the units both are in."""
+    dot = sum(a * b for a, b in zip(reference, current))
+    norms = math.sqrt(sum(a * a for a in reference)) * math.sqrt(sum(b * b for b in current))
+    if norms == 0:
+        raise ValueError("a gravity vector has zero length")
+    return math.degrees(math.acos(max(-1.0, min(1.0, dot / norms))))
+
+
+class MPU6050Tilt(Sensor):
+    """Slope tilt from an MPU6050 accelerometer over I2C, in degrees from its installed angle.
+
+    At start-up the board averages `samples` readings and keeps that gravity direction as its
+    installed angle, unless `installed` gives one ([x, y, z], any units) so a reboot after the slope has
+    moved does not hide the movement. Each read reports the angle away from it, which is what A1 compares
+    with tilt_threshold_deg. Mount the board rigidly on a stake or the structure being watched.
+    """
+
+    ADDRESS = 0x68
+    PWR_MGMT_1, ACCEL_XOUT_H = 0x6B, 0x3B
+
+    def __init__(self, sensor_id, address=ADDRESS, bus=1, samples=20, installed=None):
+        super().__init__(sensor_id)
+        import smbus2
+
+        self._bus = smbus2.SMBus(bus)
+        self._address = address
+        self._bus.write_byte_data(address, self.PWR_MGMT_1, 0)  # wake from sleep, +-2 g range
+        time.sleep(0.1)
+        self.samples = samples
+        self.installed = list(installed) if installed else self._average()
+        logging.getLogger(__name__).info(
+            "%s installed gravity vector: %s", sensor_id, [round(v, 1) for v in self.installed]
+        )
+
+    def _gravity(self):
+        raw = self._bus.read_i2c_block_data(self._address, self.ACCEL_XOUT_H, 6)
+        values = []
+        for i in range(0, 6, 2):
+            v = (raw[i] << 8) | raw[i + 1]
+            values.append(v - 65536 if v > 32767 else v)
+        return values
+
+    def _average(self):
+        total = [0.0, 0.0, 0.0]
+        for _ in range(self.samples):
+            for i, v in enumerate(self._gravity()):
+                total[i] += v
+            time.sleep(0.01)
+        return [v / self.samples for v in total]
+
+    def read(self):
+        return [Measurement("tilt", round(tilt_degrees(self.installed, self._average()), 2), "deg")]
+
+
 class MockSensor(Sensor):
     """Synthetic data for development and as a demo-day fallback.
 
@@ -141,6 +197,7 @@ DRIVERS = {
     "rain_gauge": RainGauge,
     "bme280": BME280,
     "soil_moisture": SoilMoisture,
+    "mpu6050_tilt": MPU6050Tilt,
     "mock": MockSensor,
 }
 

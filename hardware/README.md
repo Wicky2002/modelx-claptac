@@ -17,7 +17,7 @@ Sensors ─► Raspberry Pi (sensor_node.py) ─► MQTT broker ─► atlas/ing
 | BME280 breakout | Temperature, humidity, pressure | I2C |
 | Capacitive soil moisture sensor v1.2 *(optional)* | Landslide risk | Analog, so it needs the ADC below |
 | ADS1115 ADC *(optional)* | Analog input for the soil sensor | I2C |
-| MPU6050 *(optional, future)* | Slope tilt / movement | Driver not written yet |
+| MPU6050 | Slope tilt / movement | `mpu6050_tilt`: degrees from the installed angle (I2C 0x68) |
 | 1 kΩ + 2 kΩ resistors, breadboard, jumper wires | Wiring | |
 
 **Order parts in Week 0.** Local stock and shipping are the biggest schedule risk.

@@ -42,5 +42,7 @@ jobs:
           for i in $(seq 1 40); do curl -fs http://localhost:8000/health && break; sleep 3; done
           curl -fs http://localhost:8000/health
           curl -fs -o /dev/null http://localhost:8000/manager/
+      - name: Run the Ditwah drill end to end inside the container
+        run: python3 eval/e2e_drill.py http://localhost:8000
       - if: always()
         run: docker compose logs atlas | tail -50; docker compose down -v
