@@ -38,6 +38,13 @@ sensors:
   #   sensor_id: soil-01
   #   channel: 0
 
+  # Slope tilt (MPU6050 on I2C, address 0x68). Reports degrees from the installed angle.
+  # After the first install, copy the logged installed vector here so a reboot keeps the same reference.
+  # - driver: mpu6050_tilt
+  #   sensor_id: tilt-01
+  #   address: 0x68
+  #   # installed: [120.0, -340.5, 16310.2]
+
   # Demo fallback / laptop development: comment out the hardware sensors above and use these.
   # - driver: mock
   #   sensor_id: wl-mock
