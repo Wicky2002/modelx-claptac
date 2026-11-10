@@ -1,646 +1,188 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import maplibregl, { type GeoJSONSource, type LngLatBoundsLike, type Map as MLMap } from "maplibre-gl";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { usePoll, type Approval } from "../api";
 import { InformationBadges, InformationDetail, type Information } from "../components/Information";
-import { usePoll } from "../api";
-import { missionStatus, readable } from "../plain";
+import { Json } from "../components/Json";
+import { missionStatus } from "../plain";
+import { distance, LAYERS, metres, percent, roadState, searchTargets, SYMBOL, targets, type Kind, type Layer, type MapData, type Point, type Target } from "./map/model";
+import { ORBIT, useScene } from "./map/useScene";
+import "./map/command-map.css";
 
-/* The situation map.
- *
- * A live picture of the affected area for people who run a disaster, not for engineers: real streets or
- * satellite imagery, 3D terrain (Ratnapura is hilly, and slope matters for floods and landslides), live
- * rain radar, and everything ATLAS knows on top. Click anything to follow it; take a guided tour; fly
- * along an evacuation route. All sources are keyless; if the internet is down the ATLAS layers still draw.
- */
-
-interface Area { information?: Information; id: string; name: string; lat: number; lon: number; population: number | null; vulnerable: number; level: string | null; incident_id: string | null }
-interface Team { information?: Information; id: string; name: string; kind: string; lat: number; lon: number; busy: boolean }
-interface Shelter { information?: Information; id: string; name?: string; lat: number; lon: number; capacity: number; occupancy?: number | null; expected?: number; elevation_m?: number | null }
-interface Gauge { information?: Information; node: string; type: string; value: number; unit: string; threshold: number | null; lat: number; lon: number }
-interface Route { information?: Information; mission_id: string; title: string; status: string; points: [number, number][]; team?: string; people?: number; destination?: string | null; progress?: number }
-interface Edge { information?: Information; id: string; from: [number, number]; to: [number, number]; belief_open: number | null; confidence: number | null; closed_by_decision: boolean }
-interface MapData {
-  site: string;
-  bounds: [[number, number], [number, number]];
-  areas?: Area[];
-  teams?: Team[];
-  edges: Edge[];
-  routes: Route[];
-  shelters: Shelter[];
-  gauges: Gauge[];
-  observed_edges: number;
-  likely_closed: number;
-}
-interface Alert { id: string; status: string; area: string; event: string; severity: string; texts: Record<string, { headline: string; instruction: string }> }
-
-type Selected =
-  | { kind: "area"; item: Area }
-  | { kind: "shelter"; item: Shelter }
-  | { kind: "team"; item: Team }
-  | { kind: "station"; item: Station }
-  | { kind: "route"; item: Route }
-  | { kind: "road"; item: Edge };
-
-interface Station { key: string; lat: number; lon: number; gauges: Gauge[] }
-
-const LEVEL_COLOUR: Record<string, string> = { normal: "#16a34a", watch: "#eab308", warning: "#f97316", severe: "#dc2626" };
-const SENSOR_NAME: Record<string, string> = { water_level: "River level", rainfall: "Rainfall", soil_moisture: "Soil wetness", tilt: "Ground movement" };
-
-const OSM = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
-const ESRI_LABELS = "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}";
-const TERRAIN = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
-
-function metres(a: [number, number], b: [number, number]) {
-  const R = 6371000, r = Math.PI / 180;
-  const dLat = (b[0] - a[0]) * r, dLon = (b[1] - a[1]) * r;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLon / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
-const distText = (m: number) => (m < 950 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
-const bearing = (a: [number, number], b: [number, number]) => {
-  const r = Math.PI / 180;
-  const y = Math.sin((b[1] - a[1]) * r) * Math.cos(b[0] * r);
-  const x = Math.cos(a[0] * r) * Math.sin(b[0] * r) - Math.sin(a[0] * r) * Math.cos(b[0] * r) * Math.cos((b[1] - a[1]) * r);
-  return (Math.atan2(y, x) / r + 360) % 360;
-};
-function circle(lat: number, lon: number, radius: number, steps = 48): [number, number][] {
-  const out: [number, number][] = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = (i / steps) * 2 * Math.PI;
-    out.push([lon + ((radius / 111320) * Math.cos(t)) / Math.cos((lat * Math.PI) / 180), lat + (radius / 110540) * Math.sin(t)]);
-  }
-  return out;
-}
-function roadState(e: Edge) {
-  if (e.closed_by_decision) return { text: "Closed by decision", colour: "#111827" };
-  if (e.belief_open === null) return { text: "No reports yet", colour: "#94a3b8" };
-  if (e.belief_open >= 0.7) return { text: "Probably open", colour: "#16a34a" };
-  if (e.belief_open >= 0.3) return { text: "Uncertain", colour: "#d97706" };
-  return { text: "Probably closed", colour: "#dc2626" };
-}
-const pct = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v * 100)}%`);
-
-// ------------------------------------------------------------------------------------------ view link
-
-interface View { c: [number, number]; z: number; p: number; b: number; sat: boolean; terrain: boolean; radar: boolean }
-function readView(): Partial<View> {
-  const q = new URLSearchParams(window.location.hash.split("?")[1] ?? "");
-  const c = q.get("c")?.split(",").map(Number);
-  return {
-    ...(c && c.length === 2 && c.every(Number.isFinite) ? { c: [c[0], c[1]] as [number, number] } : {}),
-    ...(q.get("z") ? { z: Number(q.get("z")) } : {}),
-    ...(q.get("p") ? { p: Number(q.get("p")) } : {}),
-    ...(q.get("b") ? { b: Number(q.get("b")) } : {}),
-    ...(q.get("l") ? { sat: q.get("l")!.includes("sat"), terrain: q.get("l")!.includes("3d"), radar: q.get("l")!.includes("radar") } : {}),
-  };
-}
-
-// ------------------------------------------------------------------------------------------ the page
+const DEFAULT_LAYERS: Record<Layer, boolean> = { area: true, flood: true, road: true, route: true, shelter: true, team: true, gauge: true };
+const GROUPS: { kind: Kind; label: string }[] = [
+  { kind: "area", label: "Incidents & areas" }, { kind: "route", label: "Mission routes" },
+  { kind: "shelter", label: "Shelters" }, { kind: "team", label: "Teams & vehicles" },
+  { kind: "gauge", label: "Sensors" }, { kind: "road", label: "Roads" },
+  { kind: "flood", label: "Flood extent assessments" },
+];
 
 export function MapPage() {
   const { data, error } = usePoll<MapData>("/dev/map", 4000);
-  const alerts = usePoll<Alert[]>("/alerts", 5000);
-  const approvals = usePoll<unknown[]>("/approvals", 5000);
-  const holder = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MLMap | null>(null);
-  const markers = useRef<Map<string, maplibregl.Marker>>(new Map());
-  const initial = useRef(readView());
-  const [ready, setReady] = useState(false);
-  const [sat, setSat] = useState(initial.current.sat ?? false);
-  const [terrain, setTerrain] = useState(initial.current.terrain ?? true);
-  const [radar, setRadar] = useState(initial.current.radar ?? false);
-  const [radarNote, setRadarNote] = useState<string | null>(null);
-  const [selected, setSelected] = useState<Selected | null>(null);
-  const [centre, setCentre] = useState<[number, number] | null>(null);
-  const [caption, setCaption] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const approvals = usePoll<Approval[]>("/approvals", 5000);
+  const [layers, setLayers] = useState(DEFAULT_LAYERS);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [pin, setPin] = useState<Point | null>(null);
+  const [path, setPath] = useState<string[]>([]);
+  const [terrain, setTerrain] = useState(false);
+  const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<"nearby" | "details">("nearby");
+  const [mobilePanel, setMobilePanel] = useState<"layers" | "intel" | null>(null);
   const [copied, setCopied] = useState(false);
-  const [showLegend, setShowLegend] = useState(true);
-  const stop = useRef(false);
-  const fitted = useRef(false);
-
-  const stations = useMemo<Station[]>(() => {
-    const out = new Map<string, Station>();
-    for (const g of data?.gauges ?? []) {
-      const key = `${g.lat.toFixed(4)},${g.lon.toFixed(4)}`;
-      if (!out.has(key)) out.set(key, { key, lat: g.lat, lon: g.lon, gauges: [] });
-      out.get(key)!.gauges.push(g);
-    }
-    return [...out.values()];
-  }, [data]);
-
-  // ---- create the map once
+  const [shareError, setShareError] = useState("");
+  const all = useMemo(() => data ? targets(data) : [], [data]);
+  const selected = all.find(t => t.key === selectedKey);
+  function choose(key: string | null, point?: Point) {
+    setSelectedKey(key); setPin(point ?? null); setTab(key ? "details" : "nearby");
+    if (key) setPath(old => [...old.filter(k => k !== key), key].slice(-4)); else setPath([]);
+    if (key) setMobilePanel("intel");
+  }
+  const scene = useScene(data, layers, selected, choose, terrain, fit);
+  const orbital = scene.view.zoom < 8;
+  const anchor: Point = selected?.point ?? pin ?? [scene.view.lat, scene.view.lon];
+  const nearby = useMemo(() => all.map(t => ({ ...t, distance: metres(anchor, t.point) })).sort((a, b) => a.distance - b.distance), [all, anchor[0], anchor[1]]);
+  const hits = useMemo(() => searchTargets(all, query), [all, query]);
+  const active = data?.routes.filter(r => !["completed", "cancelled", "failed"].includes(r.status)) ?? [];
+  const incident = data?.areas.find(a => a.incident_id);
+  const uncertain = data?.edges.filter(e => e.belief_open != null && e.belief_open >= .3 && e.belief_open < .7).length ?? 0;
+  const river = data?.gauges.find(g => g.type === "water_level");
+  const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function fit() {
+    choose(null); const map = scene.map.current;
+    setMobilePanel(null);
+    const padding = map && map.getContainer().clientWidth > 1050 ? { left: 310, right: 370, top: 140, bottom: 130 } : { left: 45, right: 45, top: 175, bottom: 120 };
+    if (data && map) { map.stop(); map.fitBounds(data.bounds.map(([lat, lon]) => [lon, lat]) as [[number, number], [number, number]], { padding, maxZoom: 15, duration: reduced() ? 0 : 1600, bearing: 0 }); }
+  }
+  function orbit() {
+    choose(null); setTerrain(false); setMobilePanel(null);
+    // Schedule after terrain is flattened so its effect cannot cancel the flight.
+    setOrbitalFlight(true);
+  }
+  const [orbitalFlight, setOrbitalFlight] = useState(false);
   useEffect(() => {
-    if (!holder.current || mapRef.current) return;
-    const v = initial.current;
-    const map = new maplibregl.Map({
-      container: holder.current,
-      style: {
-        version: 8,
-        sources: {
-          streets: { type: "raster", tiles: [OSM], tileSize: 256, maxzoom: 19, attribution: "© OpenStreetMap contributors" },
-          satellite: { type: "raster", tiles: [ESRI], tileSize: 256, maxzoom: 19, attribution: "Imagery © Esri, Maxar, Earthstar Geographics" },
-          labels: { type: "raster", tiles: [ESRI_LABELS], tileSize: 256, maxzoom: 19 },
-          dem: { type: "raster-dem", tiles: [TERRAIN], tileSize: 256, maxzoom: 15, encoding: "terrarium", attribution: "Terrain: Mapzen / AWS Open Data" },
-        },
-        layers: [
-          { id: "bg", type: "background", paint: { "background-color": "#e7ebf0" } },
-          { id: "streets", type: "raster", source: "streets", layout: { visibility: v.sat ? "none" : "visible" } },
-          { id: "satellite", type: "raster", source: "satellite", layout: { visibility: v.sat ? "visible" : "none" } },
-          { id: "labels", type: "raster", source: "labels", layout: { visibility: v.sat ? "visible" : "none" } },
-          { id: "hillshade", type: "hillshade", source: "dem", paint: { "hillshade-exaggeration": 0.35, "hillshade-shadow-color": "#334155" } },
-        ],
-      },
-      center: v.c ? [v.c[1], v.c[0]] : [80.3992, 6.6828],
-      zoom: v.z ?? 14,
-      pitch: v.p ?? 50,
-      bearing: v.b ?? -15,
-      maxPitch: 75,
-      attributionControl: { compact: true },
-    });
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
-    map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-left");
-    map.once("style.load", () => {  // not "load": that waits for tiles, which may never come offline
-      if (initial.current.terrain ?? true) map.setTerrain({ source: "dem", exaggeration: 1.6 });
-      map.addSource("area", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      map.addLayer({ id: "area-fill", type: "fill", source: "area", paint: { "fill-color": ["get", "colour"], "fill-opacity": 0.16 } });
-      map.addLayer({ id: "area-line", type: "line", source: "area", paint: { "line-color": ["get", "colour"], "line-width": 2.5, "line-dasharray": [2, 1.5] } });
-      map.addSource("roads", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      map.addLayer({
-        id: "roads", type: "line", source: "roads",
-        layout: { "line-cap": "round", "line-join": "round" },
-        paint: { "line-color": ["get", "colour"], "line-width": ["case", ["get", "known"], 4, 2], "line-opacity": ["get", "opacity"] },
-      });
-      map.addSource("routes", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      map.addLayer({ id: "routes-casing", type: "line", source: "routes", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ffffff", "line-width": 9, "line-opacity": 0.9 } });
-      map.addLayer({ id: "routes", type: "line", source: "routes", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#2563eb", "line-width": 5, "line-dasharray": [0, 2, 2] } });
-      // wide, invisible copies so a thin line is easy to click or tap
-      map.addLayer({ id: "roads-hit", type: "line", source: "roads", paint: { "line-color": "#000", "line-width": 16, "line-opacity": 0 } }, "routes-casing");
-      map.addLayer({ id: "routes-hit", type: "line", source: "routes", paint: { "line-color": "#000", "line-width": 22, "line-opacity": 0 } });
-      map.addLayer({ id: "routes-selected", type: "line", source: "routes", filter: ["==", ["get", "id"], ""], layout: { "line-cap": "round" }, paint: { "line-color": "#f59e0b", "line-width": 7 } });
-      map.on("click", "roads-hit", (e) => {
-        if (map.queryRenderedFeatures(e.point, { layers: ["routes-hit"] }).length) return; // a route wins over the road under it
-        const id = e.features?.[0]?.properties?.id as string | undefined;
-        const edge = dataRef.current?.edges.find((x) => x.id === id);
-        if (edge) setSelected({ kind: "road", item: edge });
-      });
-      map.on("click", "routes-hit", (e) => {
-        const id = e.features?.[0]?.properties?.id as string | undefined;
-        const route = dataRef.current?.routes.find((x) => x.mission_id === id);
-        if (route) setSelected({ kind: "route", item: route });
-      });
-      for (const layer of ["roads-hit", "routes-hit"]) {
-        map.on("mouseenter", layer, () => (map.getCanvas().style.cursor = "pointer"));
-        map.on("mouseleave", layer, () => (map.getCanvas().style.cursor = ""));
-      }
-      setReady(true);
-    });
-    const onMove = () => { const c = map.getCenter(); setCentre([c.lat, c.lng]); };
-    map.on("moveend", onMove);
-    map.on("dragstart", () => { stop.current = true; });
-    // "flowing" dashes on mission routes, like traffic moving toward the shelter
-    let step = 0, raf = 0, last = 0;
-    const dash = [[0, 4, 3], [0.5, 4, 2.5], [1, 4, 2], [1.5, 4, 1.5], [2, 4, 1], [2.5, 4, 0.5], [3, 4, 0], [0, 0.5, 3, 3.5], [0, 1, 3, 3], [0, 1.5, 3, 2.5], [0, 2, 3, 2], [0, 2.5, 3, 1.5], [0, 3, 3, 1], [0, 3.5, 3, 0.5]];
-    const animate = (t: number) => {
-      if (t - last > 90 && map.getLayer("routes")) {
-        step = (step + 1) % dash.length; last = t;
-        map.setPaintProperty("routes", "line-dasharray", dash[step]);
-      }
-      raf = requestAnimationFrame(animate);
-    };
-    raf = requestAnimationFrame(animate);
-    mapRef.current = map;
-    return () => { cancelAnimationFrame(raf); map.remove(); mapRef.current = null; };
-  }, []);
-
-  const dataRef = useRef<MapData | undefined>(undefined);
-  dataRef.current = data ?? undefined;
-
-  // ---- layers from data
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !ready || !data) return;
-    (map.getSource("roads") as GeoJSONSource).setData({
-      type: "FeatureCollection",
-      features: data.edges.map((e) => {
-        const s = roadState(e);
-        return {
-          type: "Feature", properties: { id: e.id, colour: s.colour, known: e.belief_open !== null || e.closed_by_decision, opacity: e.belief_open === null && !e.closed_by_decision ? 0.45 : 0.45 + 0.55 * (e.confidence ?? 0.6) },
-          geometry: { type: "LineString", coordinates: [[e.from[1], e.from[0]], [e.to[1], e.to[0]]] },
-        };
-      }),
-    });
-    (map.getSource("routes") as GeoJSONSource).setData({
-      type: "FeatureCollection",
-      features: data.routes.map((r) => ({ type: "Feature", properties: { id: r.mission_id }, geometry: { type: "LineString", coordinates: r.points.map((p) => [p[1], p[0]]) } })),
-    });
-    (map.getSource("area") as GeoJSONSource).setData({
-      type: "FeatureCollection",
-      features: (data.areas ?? []).map((a) => ({
-        type: "Feature", properties: { id: a.id, colour: a.level ? LEVEL_COLOUR[a.level] ?? "#f97316" : "#64748b" },
-        geometry: { type: "Polygon", coordinates: [circle(a.lat, a.lon, 650)] },
-      })),
-    });
-    if (!fitted.current && !initial.current.c) {
-      const [[la0, lo0], [la1, lo1]] = data.bounds;
-      map.fitBounds([[lo0, la0], [lo1, la1]] as LngLatBoundsLike, { padding: 60, pitch: 50, bearing: -15, duration: 0 });
-      fitted.current = true;
-    }
-    // markers: areas, shelters, teams, sensor stations
-    const want = new Set<string>();
-    const stack = new Map<string, number>();
-    const place = (key: string, lat: number, lon: number, html: string, cls: string, onClick: () => void) => {
-      want.add(key);
-      const spot = `${lat.toFixed(4)},${lon.toFixed(4)}`;
-      const n = stack.get(spot) ?? 0;
-      stack.set(spot, n + 1);
-      const offset: [number, number] = n === 0 ? [0, 0] : [Math.cos(n * 1.1) * (18 + n * 5), Math.sin(n * 1.1) * (18 + n * 5)];
-      let m = markers.current.get(key);
-      if (!m) {
-        const el = document.createElement("button");
-        el.className = `mk ${cls}`;
-        el.addEventListener("click", (ev) => { ev.stopPropagation(); onClickRef.current.get(key)?.(); });
-        m = new maplibregl.Marker({ element: el, anchor: "bottom" }).setLngLat([lon, lat]).addTo(map);
-        markers.current.set(key, m);
-      }
-      m.setLngLat([lon, lat]).setOffset(offset);
-      const el = m.getElement();
-      el.className = `mk ${cls}`;
-      const info = key.startsWith("station:") ? stations.find(s => `station:${s.key}` === key)?.gauges[0]?.information
-        : key.startsWith("area:") ? data.areas?.find(a => `area:${a.id}` === key)?.information
-        : key.startsWith("shelter:") ? data.shelters.find(s => `shelter:${s.id}` === key)?.information
-        : data.teams?.find(t => `team:${t.id}` === key)?.information;
-      const badge = `<span class="mk-status">${(info?.labels ?? ["unknown"]).join(" · ")}</span>`;
-      if (el.innerHTML !== html + badge) el.innerHTML = html + badge;
-      onClickRef.current.set(key, onClick);
-    };
-    for (const a of data.areas ?? []) {
-      place(`area:${a.id}`, a.lat, a.lon, `<span class="mk-i">⚠</span><span class="mk-t">${a.name}${a.level ? ` · ${a.level}` : ""}</span>`, `area ${a.level ?? "none"}`, () => setSelected({ kind: "area", item: a }));
-    }
-    for (const s of data.shelters) {
-      const full = s.capacity ? ((s.occupancy ?? 0) + (s.expected ?? 0)) / s.capacity : 0;
-      place(`shelter:${s.id}`, s.lat, s.lon, `<span class="mk-i">⌂</span><span class="mk-t">${s.name ?? s.id}${s.expected ? ` · ${s.expected} coming` : ""}</span>`, `shelter ${full >= 0.9 ? "full" : ""}`, () => setSelected({ kind: "shelter", item: s }));
-    }
-    for (const t of data.teams ?? []) {
-      place(`team:${t.id}`, t.lat, t.lon, `<span class="mk-i">${t.kind === "vehicle" ? "🚐" : "⛑"}</span>`, `team ${t.busy ? "busy" : ""}`, () => setSelected({ kind: "team", item: t }));
-    }
-    for (const st of stations) {
-      const over = st.gauges.some((g) => g.threshold != null && g.value >= g.threshold);
-      const river = st.gauges.find((g) => g.type === "water_level");
-      const first = st.gauges[0];
-      const label = river ? `River ${river.value.toFixed(0)} ${river.unit}` : st.gauges.length === 1 ? `${SENSOR_NAME[first.type] ?? first.type} ${first.value.toFixed(0)} ${first.unit}` : `${st.gauges.length} sensors`;
-      place(`station:${st.key}`, st.lat, st.lon, `<span class="mk-i">〰</span><span class="mk-t">${label}</span>`, `station ${over ? "over" : ""}`, () => setSelected({ kind: "station", item: st }));
-    }
-    for (const [key, m] of markers.current) if (!want.has(key)) { m.remove(); markers.current.delete(key); }
-  }, [data, ready, stations]);
-
-  const onClickRef = useRef<Map<string, () => void>>(new Map());
-
-  // ---- basemap, terrain, radar
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !ready) return;
-    map.setLayoutProperty("streets", "visibility", sat ? "none" : "visible");
-    map.setLayoutProperty("satellite", "visibility", sat ? "visible" : "none");
-    map.setLayoutProperty("labels", "visibility", sat ? "visible" : "none");
-  }, [sat, ready]);
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !ready) return;
-    map.setTerrain(terrain ? { source: "dem", exaggeration: 1.6 } : null);
-    map.easeTo({ pitch: terrain ? 55 : 0, duration: 800 });
-  }, [terrain, ready]);
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !ready) return;
-    if (!radar) {
-      if (map.getLayer("radar")) map.removeLayer("radar");
-      if (map.getSource("radar")) map.removeSource("radar");
-      setRadarNote(null);
-      return;
-    }
-    let cancelled = false;
-    fetch("https://api.rainviewer.com/public/weather-maps.json")
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancelled) return;
-        const frame = d.radar?.past?.[d.radar.past.length - 1];
-        if (!frame) throw new Error("no radar frame");
-        if (!map.getSource("radar")) {
-          map.addSource("radar", { type: "raster", tiles: [`${d.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`], tileSize: 256, maxzoom: 7, attribution: "Radar: RainViewer" });
-          map.addLayer({ id: "radar", type: "raster", source: "radar", paint: { "raster-opacity": 0.6 } }, "area-fill");
-        }
-        setRadarNote(`Live rain radar, ${new Date(frame.time * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
-      })
-      .catch(() => setRadarNote("Rain radar needs an internet connection."));
-    return () => { cancelled = true; };
-  }, [radar, ready]);
-
-  // ---- camera helpers
-  const flyTo = useCallback((lat: number, lon: number, zoom = 16.2, pitch = 60, brg?: number) => {
-    const map = mapRef.current;
-    if (!map) return Promise.resolve();
-    return new Promise<void>((done) => {
-      map.once("moveend", () => done());
-      map.flyTo({ center: [lon, lat], zoom, pitch: terrain ? pitch : 0, bearing: brg ?? map.getBearing(), duration: 2200, essential: true });
-    });
-  }, [terrain]);
-
-  const where = (s: Selected): [number, number] => {
-    switch (s.kind) {
-      case "route": return s.item.points[Math.floor(s.item.points.length / 2)];
-      case "road": return [(s.item.from[0] + s.item.to[0]) / 2, (s.item.from[1] + s.item.to[1]) / 2];
-      default: return [s.item.lat, s.item.lon];
-    }
-  };
-
-  // follow the selected thing
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !ready) return;
-    map.setFilter("routes-selected", ["==", ["get", "id"], selected?.kind === "route" ? selected.item.mission_id : ""]);
-    if (!selected) return;
-    if (selected.kind === "route") {
-      const b = new maplibregl.LngLatBounds();
-      selected.item.points.forEach((p) => b.extend([p[1], p[0]]));
-      map.fitBounds(b, { padding: { top: 80, bottom: 260, left: 60, right: 340 }, pitch: terrain ? 50 : 0, duration: 1600 });
-    } else {
-      const [lat, lon] = where(selected);
-      void flyTo(lat, lon, selected.kind === "area" ? 15.2 : 16.4);
-    }
-  }, [selected, ready]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const flyAlong = async (route: Route) => {
-    const map = mapRef.current;
-    if (!map || route.points.length < 2) return;
-    stop.current = false;
-    setCaption(`Flying the route to ${route.destination ?? "the destination"}…`);
-    await flyTo(route.points[0][0], route.points[0][1], 17, 65, bearing(route.points[0], route.points[1]));
-    const legs = route.points.slice(1).map((p, i) => metres(route.points[i], p));
-    const total = legs.reduce((a, b) => a + b, 0);
-    const ms = Math.min(16000, Math.max(6000, total * 12));
-    const t0 = performance.now();
-    await new Promise<void>((done) => {
-      const frame = (t: number) => {
-        if (stop.current) return done();
-        const want = Math.min(1, (t - t0) / ms) * total;
-        let acc = 0, i = 0;
-        while (i < legs.length - 1 && acc + legs[i] < want) acc += legs[i++];
-        const f = legs[i] ? (want - acc) / legs[i] : 1;
-        const a = route.points[i], b = route.points[i + 1];
-        const lat = a[0] + (b[0] - a[0]) * f, lon = a[1] + (b[1] - a[1]) * f;
-        const target = bearing(a, b), cur = map.getBearing();
-        const turn = ((((target - cur) % 360) + 540) % 360) - 180;
-        map.jumpTo({ center: [lon, lat], bearing: cur + turn * 0.08, pitch: terrain ? 65 : 0, zoom: 17 });
-        if (want >= total) return done();
-        requestAnimationFrame(frame);
-      };
-      requestAnimationFrame(frame);
-    });
-    setCaption(stop.current ? null : `Arrived: ${route.destination ?? "destination"}.`);
-    window.setTimeout(() => setCaption(null), 3500);
-  };
-
-  const tour = async () => {
-    if (!data) return;
-    stop.current = false;
-    setSelected(null);
-    const steps: { text: string; go: () => Promise<void> }[] = [];
-    const [[la0, lo0], [la1, lo1]] = data.bounds;
-    steps.push({ text: `This is ${data.site[0].toUpperCase()}${data.site.slice(1)}. Coloured lines are roads: green probably open, orange uncertain, red probably closed.`, go: () => flyTo((la0 + la1) / 2, (lo0 + lo1) / 2, 14.2, 45, -20) });
-    for (const a of (data.areas ?? []).filter((x) => x.level)) {
-      steps.push({ text: `${a.name}: alert level ${a.level}. ${a.population?.toLocaleString() ?? "?"} people live here, about ${a.vulnerable.toLocaleString()} of them vulnerable.`, go: () => flyTo(a.lat, a.lon, 15.6, 60, 30) });
-    }
-    const river = stations.find((s) => s.gauges.some((g) => g.type === "water_level"));
-    if (river) {
-      const g = river.gauges.find((x) => x.type === "water_level")!;
-      steps.push({ text: `The river gauge reads ${g.value.toFixed(1)} ${g.unit}${g.threshold != null ? `; the danger line is ${g.threshold} ${g.unit}` : ""}.`, go: () => flyTo(river.lat, river.lon, 16.8, 62, -40) });
-    }
-    if (data.routes.length) {
-      const people = data.routes.reduce((n, r) => n + (r.people ?? 0), 0);
-      steps.push({
-        text: `${data.routes.length} missions are under way${people ? `, moving ${people} people` : ""}. Blue lines are their routes.`,
-        go: async () => {
-          const b = new maplibregl.LngLatBounds();
-          data.routes.forEach((r) => r.points.forEach((p) => b.extend([p[1], p[0]])));
-          mapRef.current?.fitBounds(b, { padding: 120, pitch: terrain ? 55 : 0, bearing: 20, duration: 2200 });
-          await new Promise((r) => setTimeout(r, 2300));
-        },
-      });
-    }
-    for (const s of data.shelters.filter((x) => (x.expected ?? 0) > 0)) {
-      steps.push({ text: `${s.name ?? s.id}: room for ${s.capacity}, ${s.expected} people on their way${s.elevation_m != null ? `, ${Math.round(s.elevation_m)} m above sea level` : ""}.`, go: () => flyTo(s.lat, s.lon, 17, 65, 60) });
-    }
-    for (const [i, st] of steps.entries()) {
-      if (stop.current) break;
-      setCaption(`${i + 1}/${steps.length} · ${st.text}`);
-      await st.go();
-      await new Promise((r) => setTimeout(r, 3800));
-    }
-    setCaption(null);
-  };
-
-  const reset = () => {
-    stop.current = true;
-    setSelected(null);
-    setCaption(null);
-    const map = mapRef.current;
-    if (!map || !data) return;
-    const [[la0, lo0], [la1, lo1]] = data.bounds;
-    map.fitBounds([[lo0, la0], [lo1, la1]] as LngLatBoundsLike, { padding: 60, pitch: terrain ? 50 : 0, bearing: -15, duration: 1400 });
-  };
-
-  const copyLink = () => {
-    const map = mapRef.current;
-    if (!map) return;
+    if (!orbitalFlight || !scene.ready) return;
+    scene.map.current?.stop();
+    scene.map.current?.flyTo({ ...ORBIT, duration: reduced() ? 0 : 2200 });
+    setOrbitalFlight(false);
+  }, [orbitalFlight, scene.ready]);
+  async function share() {
+    const map = scene.map.current; if (!map) return;
     const c = map.getCenter();
-    const layers = [sat && "sat", terrain && "3d", radar && "radar"].filter(Boolean).join(",");
-    const q = `c=${c.lat.toFixed(5)},${c.lng.toFixed(5)}&z=${map.getZoom().toFixed(1)}&p=${Math.round(map.getPitch())}&b=${Math.round(map.getBearing())}&l=${layers}`;
-    const url = `${window.location.origin}${window.location.pathname}#/map?${q}`;
-    window.history.replaceState(null, "", `#/map?${q}`);
-    navigator.clipboard?.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); }, () => undefined);
-  };
-
-  // ---- search and nearby
-  const everything = useMemo(() => {
-    if (!data) return [] as { label: string; sub: string; icon: string; pos: [number, number]; sel: Selected }[];
-    return [
-      ...(data.areas ?? []).map((a) => ({ label: a.name, sub: a.level ? `Alert: ${a.level}` : "Area", icon: "⚠", pos: [a.lat, a.lon] as [number, number], sel: { kind: "area", item: a } as Selected })),
-      ...data.shelters.map((s) => ({ label: s.name ?? s.id, sub: `Shelter · room for ${s.capacity}`, icon: "⌂", pos: [s.lat, s.lon] as [number, number], sel: { kind: "shelter", item: s } as Selected })),
-      ...(data.teams ?? []).map((t) => ({ label: t.name, sub: t.busy ? "On a mission" : "Available", icon: t.kind === "vehicle" ? "🚐" : "⛑", pos: [t.lat, t.lon] as [number, number], sel: { kind: "team", item: t } as Selected })),
-      ...stations.map((s) => ({ label: s.gauges.map((g) => SENSOR_NAME[g.type] ?? g.type).join(", "), sub: "Sensor station", icon: "〰", pos: [s.lat, s.lon] as [number, number], sel: { kind: "station", item: s } as Selected })),
-      ...data.routes.map((r) => ({ label: `${r.team ?? "Team"} → ${r.destination ?? "standby"}`, sub: r.people ? `Moving ${r.people} people` : "Mission", icon: "➜", pos: r.points[Math.floor(r.points.length / 2)], sel: { kind: "route", item: r } as Selected })),
-    ];
-  }, [data, stations]);
-
-  const nearby = useMemo(() => {
-    if (!centre) return [];
-    return everything.map((x) => ({ ...x, d: metres(centre, x.pos) })).sort((a, b) => a.d - b.d).slice(0, 8);
-  }, [everything, centre]);
-
-  const doSearch = (e: React.FormEvent) => {
+    const hash = `#/map?c=${c.lat.toFixed(5)},${c.lng.toFixed(5)}&z=${map.getZoom().toFixed(2)}`;
+    try { await navigator.clipboard.writeText(`${location.origin}${location.pathname}${hash}`); setCopied(true); setShareError(""); }
+    catch { setShareError("Clipboard unavailable. The address bar now contains this view."); }
+    history.replaceState(null, "", hash);
+  }
+  function search(e: React.FormEvent) {
     e.preventDefault();
-    const q = search.trim();
-    const ll = q.match(/^\s*(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)\s*$/);
-    if (ll) { void flyTo(Number(ll[1]), Number(ll[2]), 16); return; }
-    const hit = everything.find((x) => x.label.toLowerCase().includes(q.toLowerCase()) || x.sub.toLowerCase().includes(q.toLowerCase()));
-    if (hit) setSelected(hit.sel);
-  };
+    const point = query.trim().match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    if (point) {
+      const lat = Number(point[1]), lon = Number(point[2]);
+      if (Math.abs(lat) <= 85 && Math.abs(lon) <= 180) { choose(null, [lat, lon]); scene.map.current?.flyTo({ center: [lon, lat], zoom: 15, duration: reduced() ? 0 : 1000 }); setQuery(""); }
+    } else if (hits[0]) { choose(hits[0].key); setQuery(""); }
+  }
+  const row = (t: Target, trailing?: string) => <button key={t.key} className={`asset-row ${selectedKey === t.key ? "selected" : ""}`} onClick={() => { choose(t.key); setQuery(""); }}>
+    <span className={`asset-icon icon-${t.kind}`}>{SYMBOL[t.kind]}</span><span className="asset-text"><b>{t.title}</b><small>{t.subtitle}</small></span><span className="asset-distance">{trailing ?? "↗"}</span>
+  </button>;
 
-  // ---- the situation read-out
-  const river = data?.gauges.find((g) => g.type === "water_level");
-  const activeArea = data?.areas?.find((a) => a.level);
-  const moving = data?.routes.reduce((n, r) => n + (r.people ?? 0), 0) ?? 0;
-  const liveAlert = alerts.data?.find((a) => a.status === "active");
+  return <div className={`command-map ${orbital ? "is-orbital" : "is-local"}`} aria-label="Situation map command view">
+    <div ref={scene.container} className="scene-canvas" />
+    <div className="scene-vignette" aria-hidden="true" />
+    <div className="scene-grid" aria-hidden="true" />
+    <header className="command-header">
+      <div className="command-identity"><span className="eye-mark" aria-hidden="true">◎</span><div><small>ATLAS / SITUATIONAL AWARENESS</small><h1>{data?.site ?? "Connecting"}<span> / operations</span></h1></div></div>
+      <form className="command-search" onSubmit={search}><span aria-hidden="true">⌕</span><input aria-label="Search the map" placeholder="Find an incident, shelter, team or coordinates" value={query} onChange={e => setQuery(e.target.value)} /><kbd>↵</kbd>
+        {query && <div className="search-results">{hits.map(t => row(t))}{!hits.length && <p>No matching assets. Try latitude, longitude.</p>}</div>}
+      </form>
+      <div className="connection-readout"><i className={error ? "lost" : ""} /><span>{error ? "CONNECTION LOST" : data ? "COP CONNECTED" : "CONNECTING"}<small>{data ? `${data.edges.length} road segments · refresh 4s` : "Waiting for operating picture"}</small></span></div>
+    </header>
 
-  if (error) return <div className="page"><div className="err">{error}</div></div>;
-  return (
-    <div className="page flush">
-      <div className="mapwrap">
-        <div ref={holder} className="map" />
+    <div className="mobile-map-tabs"><button aria-pressed={mobilePanel === "layers"} onClick={() => setMobilePanel(mobilePanel === "layers" ? null : "layers")}>Layers & situation</button><button aria-pressed={mobilePanel === "intel"} onClick={() => setMobilePanel(mobilePanel === "intel" ? null : "intel")}>Nearby & details</button></div>
+    <aside className={`command-left ${mobilePanel === "layers" ? "mobile-open" : ""}`} aria-label="Situation and layers">
+      <section className="glass-panel situation-panel">
+        <div className="panel-kicker"><span>01 / SITUATION</span><span className="signal-bars" aria-hidden="true">▂▄▆</span></div>
+        <div className="situation-level"><span className="severity-orb" /><div><small>AREA ASSESSMENT</small><h2>{incident?.level ?? "Unassessed"}</h2></div></div>
+        <p>{incident?.name ?? "Select an area to inspect its evidence."}</p>
+        <div className="situation-metrics"><div><b>{data?.likely_closed ?? "—"}</b><small>likely closed roads</small></div><div><b>{uncertain}</b><small>uncertain roads</small></div><div><b>{active.length}</b><small>active mission tickets</small></div><div><b>{data?.shelters.length ?? "—"}</b><small>reference shelters</small></div></div>
+        {river && <div className="gauge-readout"><span>RIVER INPUT <InformationBadges info={river.information} /></span><strong>{river.value.toFixed(1)}<small> {river.unit}</small></strong><div className="gauge-meter"><i style={{ width: `${Math.min(100, river.value / Math.max(river.threshold ?? 1, 1) * 65)}%` }} /></div><small>Scenario input units · inspect source before use</small></div>}
+        {!!approvals.data?.length && <a className="decision-link" href="#/decisions"><span>{approvals.data.length} decisions awaiting approval</span><b>↗</b></a>}
+      </section>
+      <section className="glass-panel layer-panel">
+        <div className="panel-kicker"><span>02 / MAP LAYERS</span><span>{Object.values(layers).filter(Boolean).length - (!(data?.flood_extents?.length) && layers.flood ? 1 : 0)} ON</span></div>
+        {LAYERS.map(l => { const unavailable = l.key === "flood" && !data?.flood_extents?.length; return <button key={l.key} className={`layer-control ${layers[l.key] && !unavailable ? "enabled" : ""}`} disabled={unavailable} aria-pressed={layers[l.key] && !unavailable} aria-label={l.label} onClick={() => setLayers(old => ({ ...old, [l.key]: !old[l.key] }))}>
+          <i className="layer-dot" style={{ background: l.color }} /><span><b>{l.label}</b><small>{unavailable ? "No geometry supplied" : l.hint}</small></span><i className="layer-switch" aria-hidden="true" />
+        </button>; })}
+      </section>
+      <div className="map-key"><span><i style={{ background: "#64cbb0" }} />Probably open</span><span><i style={{ background: "#f5bd5b" }} />Uncertain</span><span><i style={{ background: "#ff6679" }} />Probably closed</span><p>Road state is inferred. Dashed areas are not flood extent.</p></div>
+    </aside>
 
-        <div className="hud">
-          <div className="hud-title">Situation now · {data?.site ?? "…"}</div>
-          <div className="hud-row">
-            <span>Alert level</span>
-            <b style={{ color: activeArea?.level ? LEVEL_COLOUR[activeArea.level] : undefined }}>{activeArea?.level ? activeArea.level.toUpperCase() : "Normal"}</b>
-          </div>
-          {river && (
-            <div className="hud-row">
-              <span>River level</span>
-              <b style={{ color: river.threshold != null && river.value >= river.threshold ? "#dc2626" : undefined }}>
-                {river.value.toFixed(1)} {river.unit}{river.threshold != null && <small> / danger {river.threshold}</small>}
-              </b>
-            </div>
-          )}
-          <div className="hud-row"><span>Roads probably closed</span><b>{data?.likely_closed ?? "—"}</b></div>
-          <div className="hud-row"><span>People assigned to missions</span><b>{moving}</b></div>
-          <div className="hud-row"><span>Missions under way</span><b>{data?.routes.length ?? "—"}</b></div>
-          {liveAlert && <div className="hud-alert">Alert record: {liveAlert.texts?.en?.headline ?? `${liveAlert.event} · ${liveAlert.area}`}</div>}
-          {(approvals.data?.length ?? 0) > 0 && <a className="hud-decide" href="#/decisions">{approvals.data!.length} decision{approvals.data!.length > 1 ? "s" : ""} waiting for you →</a>}
-        </div>
+    <aside className={`command-right glass-panel ${mobilePanel === "intel" ? "mobile-open" : ""}`} aria-label="Map intelligence">
+      <div className="panel-kicker"><span>03 / LOCAL INTELLIGENCE</span><span>⌖</span></div>
+      <div className="intel-tabs"><button aria-pressed={tab === "nearby"} onClick={() => setTab("nearby")}>Proximity roster</button><button aria-pressed={tab === "details"} disabled={!selected} onClick={() => setTab("details")}>Selected asset</button><button className="mobile-close" onClick={() => setMobilePanel(null)} aria-label="Close map panel">×</button></div>
+      {tab === "nearby" ? <div className="intel-scroll nearby-roster"><div className="roster-anchor"><small>MEASURED FROM</small><b>{selected?.title ?? (pin ? "Selected map point" : "Map centre")}</b><span>{anchor[0].toFixed(5)}° N / {anchor[1].toFixed(5)}° E</span></div>
+        {GROUPS.map(g => <section className="roster-group" key={g.kind}><h3>{g.label}<span>{all.filter(t => t.kind === g.kind).length}</span></h3>{nearby.filter(t => t.kind === g.kind).slice(0, 3).map(t => row(t, distance(t.distance)))}{!all.some(t => t.kind === g.kind) && <p className="map-empty">None recorded</p>}</section>)}
+        <p className="map-fineprint">Straight-line proximity, not travel time. Teams are shown at their bases.</p>
+      </div> : selected && data ? <div className="intel-scroll map-inspector">
+        <nav className="map-breadcrumbs" aria-label="Map selection history">{path.map((k, i) => { const t = all.find(a => a.key === k); return t && <button key={k} onClick={() => choose(k)}>{i > 0 && "› "}{t.kind === "area" ? "Incident" : t.kind === "route" ? "Route" : t.title}</button>; })}</nav>
+        <div className="asset-heading"><span className={`asset-icon icon-${selected.kind}`}>{SYMBOL[selected.kind]}</span><div><small>{selected.kind.toUpperCase()}</small><h2>{selected.title}</h2></div><button aria-label="Clear selection" onClick={() => choose(null)}>×</button></div>
+        {!layers[selected.kind] && <p className="map-notice">This asset’s map layer is hidden.</p>}
+        <AssetDetails key={selected.key} target={selected} data={data} choose={choose} />
+      </div> : <p className="map-empty">Select an asset from the map or proximity roster.</p>}
+    </aside>
 
-        <div className="mapbar">
-          <form onSubmit={doSearch}><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find a shelter, team, place or 6.68, 80.40" aria-label="Search the map" /></form>
-          <div className="seg">
-            <button className={!sat ? "on" : ""} onClick={() => setSat(false)}>Map</button>
-            <button className={sat ? "on" : ""} onClick={() => setSat(true)}>Satellite</button>
-          </div>
-          <button className={`tb ${terrain ? "on" : ""}`} onClick={() => setTerrain(!terrain)} title="Show hills and valleys in 3D">3D hills</button>
-          <button className={`tb ${radar ? "on" : ""}`} onClick={() => setRadar(!radar)} title="Live rain radar">Rain radar</button>
-          <button className="tb" onClick={() => mapRef.current?.easeTo({ bearing: 0, pitch: terrain ? 45 : 0, duration: 800 })} title="Put north at the top">North up</button>
-          <button className="tb" onClick={reset} title="Back to the whole area">Reset</button>
-          <button className="tb primary" onClick={() => void tour()} title="A guided fly-through of the situation">▶ Tour</button>
-          <button className="tb" onClick={copyLink} title="Copy a link to this exact view">{copied ? "Link copied" : "Share view"}</button>
-        </div>
-
-        {radarNote && <div className="map-note">{radarNote}</div>}
-
-        <div className="nearby">
-          <div className="hud-title">Near the centre of the map</div>
-          {nearby.map((n, i) => (
-            <button key={i} className="near" onClick={() => setSelected(n.sel)}>
-              <span className="near-i">{n.icon}</span>
-              <span className="near-t"><b>{n.label}</b><small>{n.sub}</small></span>
-              <span className="near-d">{distText(n.d)}</span>
-            </button>
-          ))}
-        </div>
-
-        {selected && <Details sel={selected} close={() => { stop.current = true; setSelected(null); }} fly={flyAlong} />}
-
-        {caption && (
-          <div className="caption">
-            <span>{caption}</span>
-            <button className="tb" onClick={() => { stop.current = true; setCaption(null); }}>Stop</button>
-          </div>
-        )}
-
-        {showLegend ? (
-          <div className="legend-card">
-            <div className="row" style={{ justifyContent: "space-between" }}><b>What the colours mean</b><a onClick={() => setShowLegend(false)}>hide</a></div>
-            <div><i className="sw" style={{ background: "#16a34a" }} /> Road probably open</div>
-            <div><i className="sw" style={{ background: "#d97706" }} /> Road uncertain</div>
-            <div><i className="sw" style={{ background: "#dc2626" }} /> Road probably closed</div>
-            <div><i className="sw" style={{ background: "#94a3b8" }} /> No reports about this road yet</div>
-            <div><i className="sw" style={{ background: "#2563eb" }} /> Mission route (planned path)</div>
-            <div className="muted sm">Fainter means less sure. ⌂ shelter · 🚐 ⛑ team · 〰 sensor · ⚠ affected area</div>
-          </div>
-        ) : (
-          <button className="legend-open tb" onClick={() => setShowLegend(true)}>Legend</button>
-        )}
-      </div>
+    <div className="map-reticle" aria-hidden="true"><span /><small>AREA OF OPERATIONS</small></div>
+    {(error || scene.sceneError || scene.tileError) && <div className="scene-warning" role="status">{error ? `Updates unavailable. Displaying last received data. ${error}` : scene.sceneError ?? "Some basemap tiles are unavailable. Operational overlays remain visible."}</div>}
+    <div className="camera-dock" aria-label="Map camera controls">
+      <button onClick={orbit} aria-pressed={orbital} disabled={!scene.ready}>◎ Globe</button>
+      <button onClick={fit} disabled={!data || !scene.ready} aria-label={`Zoom to ${data?.site ?? "operating area"}`} title="Zoom to the operating area">⌖ {data?.site ?? "Operating area"}</button>
+      <button onClick={() => scene.map.current?.easeTo({ bearing: 0, duration: reduced() ? 0 : 800 })} title="Point the camera north">↑ <span>North</span></button>
+      <i /><button aria-pressed={terrain} disabled={orbital || !scene.ready} title={orbital ? "Enter the operating area to tilt the terrain" : "Tilt the local map and show elevation"} onClick={() => setTerrain(!terrain)}>{terrain ? "◈ 3D terrain" : "◇ Tilt terrain"}</button>
+      <button onClick={() => void share()}>{copied ? "✓ Copied" : "↗ Share"}</button>
     </div>
-  );
+    {shareError && <div className="share-note" role="status">{shareError}</div>}
+    <footer className="map-telemetry"><span><i /> ATLAS / COMMON OPERATING PICTURE</span><span>{scene.view.lat.toFixed(5)}° N <b> / </b>{scene.view.lon.toFixed(5)}° E</span><span>ZOOM {scene.view.zoom.toFixed(1)} <b> / </b> HDG {Math.round((scene.view.bearing + 360) % 360)}°</span></footer>
+  </div>;
 }
 
-function Details({ sel, close, fly }: { sel: Selected; close: () => void; fly: (r: Route) => void }) {
-  let title = "", body: React.ReactNode = null;
-  if (sel.kind === "area") {
-    const a = sel.item;
-    title = a.name;
-    body = (
-      <>
-        <p>{a.level ? <>Alert level <b style={{ color: LEVEL_COLOUR[a.level] }}>{a.level}</b>. ATLAS opened an incident here.</> : "No incident here right now."}</p>
-        <p>{a.population?.toLocaleString() ?? "?"} people live here; about {a.vulnerable.toLocaleString()} are vulnerable (elderly, children, informal housing).</p>
-      </>
-    );
-  } else if (sel.kind === "shelter") {
-    const s = sel.item;
-    title = s.name ?? s.id;
-    const free = s.occupancy == null ? null : s.capacity - s.occupancy - (s.expected ?? 0);
-    body = (
-      <>
-        <p>Room for <b>{s.capacity}</b> people. <b>{s.expected ?? 0}</b> are on their way now.</p>
-        <p>{s.occupancy != null ? <>Recorded inside: <b>{s.occupancy}</b>.</> : "Nobody has reported how many are inside yet."} Space left after arrivals: <b>{free ?? "unknown until occupancy is reported"}</b>.</p>
-        {s.elevation_m != null && <p className="muted">{Math.round(s.elevation_m)} m above sea level.</p>}
-      </>
-    );
-  } else if (sel.kind === "team") {
-    const t = sel.item;
-    title = t.name;
-    body = <p>{t.kind === "vehicle" ? "Vehicle" : "Rescue team"}. <b>{t.busy ? "On a mission now." : "Available."}</b> Shown at its base.</p>;
-  } else if (sel.kind === "station") {
-    title = "Sensor station";
-    body = (
-      <table className="t">
-        <tbody>
-          {sel.item.gauges.map((g) => (
-            <tr key={g.node + g.type}>
-              <td>{SENSOR_NAME[g.type] ?? g.type}<InformationBadges info={g.information} /></td>
-              <td><b>{g.value.toFixed(1)} {g.unit}</b></td>
-              <td>{g.threshold != null && (g.value >= g.threshold ? <span className="chip bad">above danger line ({g.threshold})</span> : <span className="chip ok">below danger line ({g.threshold})</span>)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  } else if (sel.kind === "route") {
-    const r = sel.item;
-    title = r.people ? `Evacuating ${r.people} people` : r.title;
-    body = (
-      <>
-        <p><b>{r.team ?? "A team"}</b> {r.destination ? <>to <b>{r.destination}</b></> : "on standby"}. Status: <b>{missionStatus(r.status)}</b>{r.progress ? `, ${r.progress}% done` : ""}.</p>
-        <p className="muted">{readable(r.title)}</p>
-        <button className="btn primary" onClick={() => fly(r)}>Fly along this route</button>
-      </>
-    );
+function AssetDetails({ target: t, data, choose }: { target: Target; data: MapData; choose: (key: string) => void }) {
+  const [evidence, setEvidence] = useState<string | null>(null);
+  let body: React.ReactNode = null;
+  let refs = t.information?.evidence_ids ?? [];
+  let evidenceTitle = "Source evidence";
+  const jump = (key: string, label: string, sub?: string) => <button key={key} className="detail-link" onClick={() => choose(key)}><span>{label}<small>{sub}</small></span><b>↗</b></button>;
+  if (t.kind === "area") {
+    const a = data.areas.find(a => a.id === t.id)!;
+    const routes = data.routes.filter(r => r.incident_id === a.incident_id);
+    body = <><div className="detail-stats"><div><small>ASSESSMENT</small><b>{a.level ?? "Unknown"}</b></div><div><small>POPULATION · SYNTHETIC</small><b>{a.population?.toLocaleString() ?? "Unknown"}</b></div></div><p>Approximate area of concern. The radius does not represent measured inundation.</p><h3>Response routes <span>{routes.length}</span></h3>{routes.map(r => jump(`route:${r.mission_id}`, r.destination ?? r.title, `${r.team ?? "Team"} · ${missionStatus(r.status)}`))}{!routes.length && <p className="map-empty">No issued mission route recorded for this incident.</p>}</>;
+  } else if (t.kind === "route") {
+    const r = data.routes.find(r => r.mission_id === t.id)!;
+    body = <><div className="route-status">{missionStatus(r.status)}</div><p>{r.title}</p><dl><dt>Assigned people</dt><dd>{r.people ?? "Not recorded"}</dd><dt>Progress reported</dt><dd>{r.progress ?? 0}%</dd><dt>Team acknowledgement</dt><dd>{r.acknowledged_at ? new Date(r.acknowledged_at).toLocaleString() : "Awaiting confirmation"}</dd></dl>
+      {r.destination_id && jump(`shelter:${r.destination_id}`, `Inspect ${r.destination ?? "destination shelter"}`, "Occupancy, expected arrivals and approach evidence")}
+      <h3>Road evidence</h3>{data.edges.filter(e => r.road_ids?.includes(e.id)).sort((a, b) => (a.belief_open ?? .5) - (b.belief_open ?? .5)).slice(0, 3).map(e => jump(`road:${e.id}`, roadState(e).label, `${percent(e.belief_open)} passable · ${percent(e.confidence)} confidence`))}</>;
+  } else if (t.kind === "shelter") {
+    const s = data.shelters.find(s => s.id === t.id)!;
+    body = <><div className="occupancy-display"><strong>{s.occupancy ?? "?"}<span> / {s.capacity}</span></strong><small>reported occupancy / synthetic capacity</small><div className={`occupancy-meter ${s.occupancy == null ? "unknown" : ""}`}><i style={{ width: `${Math.min(100, (s.occupancy ?? 0) / Math.max(s.capacity, 1) * 100)}%` }} /></div></div><dl><dt>Expected on mission tickets</dt><dd>{s.expected}</dd><dt>Available after arrivals</dt><dd>{s.occupancy == null ? "Unknown until occupancy is reported" : s.capacity - s.occupancy - s.expected}</dd><dt>Reference elevation</dt><dd>{s.elevation_m == null ? "Unknown" : `${Math.round(s.elevation_m)} m`}</dd></dl><p>Expected arrivals do not confirm departure or arrival.</p></>;
+    refs = [...new Set([...refs, ...(s.approach_evidence_ids ?? [])])]; evidenceTitle = "Approach evidence · not an occupancy report";
+  } else if (t.kind === "gauge") {
+    const g = data.gauges.find(g => `${g.node}:${g.type}` === t.id)!;
+    body = <><div className="sensor-value">{g.value.toFixed(1)}<small>{g.unit}</small></div><p>{g.node}</p><p>Configured threshold: {g.threshold ?? "not configured"} {g.unit}. During replay these may be rescaled scenario units.</p></>;
+  } else if (t.kind === "flood") {
+    body = <p>Source-supplied polygon assessment. Its boundary is not a safe-travel boundary. Check provenance, age and disagreements before using it.</p>;
+  } else if (t.kind === "team") {
+    const team = data.teams.find(x => x.id === t.id)!;
+    body = <><div className="route-status">{team.busy ? "Assigned to a mission" : "No active assignment"}</div><p>Synthetic {team.kind}. This location is its reference base, not a real-time position.</p></>;
   } else {
-    const e = sel.item, s = roadState(e);
-    title = "Road";
-    body = e.belief_open === null && !e.closed_by_decision
-      ? <p>No sensor or field report has mentioned this road yet, so ATLAS assumes it is usable, with low confidence.</p>
-      : <p><b style={{ color: s.colour }}>{s.text}</b>: {pct(e.belief_open)} likely to be passable. How sure: {pct(e.confidence)}{e.closed_by_decision ? ". A closure action was recorded." : "."}</p>;
+    const r = data.edges.find(r => r.id === t.id)!;
+    body = <><h3 style={{ color: roadState(r).color }}>{roadState(r).label}</h3><dl><dt>Passability belief</dt><dd>{percent(r.belief_open)}</dd><dt>Confidence</dt><dd>{percent(r.confidence)}</dd></dl><p>A road assessment inferred from nearby observations is not a field clearance.</p></>;
   }
-  return (
-    <div className="details">
-      <div className="row" style={{ justifyContent: "space-between" }}>
-        <b style={{ fontSize: 16 }}>{title}</b>
-        <button className="tb" onClick={close} aria-label="Close">✕</button>
-      </div>
-      <InformationDetail info={sel.kind === "station" ? sel.item.gauges[0]?.information : sel.item.information} />
-      {body}
-    </div>
-  );
+  return <>{body}<InformationDetail info={t.information} /><section className="map-evidence"><h3>{evidenceTitle}</h3>{refs.slice(0, 12).map((ref, i) => <button key={ref} className="detail-link" onClick={() => setEvidence(ref)}><span>Observation {i + 1}<small>{ref.slice(0, 16)}…</small></span><span>↗</span></button>)}{!refs.length && <p className="map-empty">No observation evidence is linked. Reference assumptions are described above.</p>}{refs.length > 12 && <p className="map-fineprint">Showing 12 of {refs.length} linked observations.</p>}</section>{evidence && <EvidenceView key={evidence} id={evidence} close={() => setEvidence(null)} />}</>;
+}
+
+function EvidenceView({ id, close }: { id: string; close: () => void }) {
+  const { data, error } = usePoll<{ source: string; payload: Record<string, unknown>; information: Information }>(`/dev/evidence/${encodeURIComponent(id)}`, 0);
+  const card = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const panel = card.current?.closest(".intel-scroll");
+    if ((data || error) && panel && card.current) panel.scrollTop += card.current.getBoundingClientRect().top - panel.getBoundingClientRect().top;
+  }, [data, error]);
+  return <section ref={card} className="evidence-card" aria-label="Observation evidence"><div className="panel-kicker"><span>OBSERVATION EVIDENCE</span><button onClick={close} aria-label="Close evidence">×</button></div>{error ? <p role="alert">{error}</p> : data ? <><h3>{data.source}</h3><InformationDetail info={data.information} /><Json value={data.payload} /></> : <p>Loading source record…</p>}</section>;
 }

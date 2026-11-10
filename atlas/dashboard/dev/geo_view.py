@@ -10,6 +10,7 @@ this works with no internet.
 from __future__ import annotations
 
 import json
+import math
 import re
 from typing import Any
 
@@ -31,9 +32,24 @@ def situation_map(system) -> dict[str, Any]:
 
     information = Information(runtime)
     beliefs: dict[str, dict] = {}
+    flood_extents = []
     closed_hard: set[str] = set()
     for row in runtime.db.connection.execute("SELECT body FROM beliefs"):
         b = json.loads(row[0])
+        if b["attribute"] == "flood_extent" and _polygon(b["value"]):
+            flood_extents.append(
+                {
+                    "id": b["subject"],
+                    "geometry": b["value"],
+                    "information": information.describe(
+                        "inferred",
+                        refs=b["provenance"],
+                        at=b["updated_at"],
+                        ttl=b.get("ttl_seconds"),
+                        note="Source-supplied flood extent assessment, not a field clearance.",
+                    ),
+                }
+            )
         if b["subject"].startswith("edge:"):
             edge = b["subject"][5:]
             if b["attribute"] == "belief_open":
@@ -75,9 +91,18 @@ def situation_map(system) -> dict[str, Any]:
             if isinstance(n, int) and n in rg.graph.nodes
         ]
         if len(pts) >= 2:
+            road_ids = [
+                geo.edge_id(u, v)
+                for u, v in zip(mission.route, mission.route[1:])
+                if isinstance(u, int) and isinstance(v, int)
+            ]
+            route_refs = [
+                ref for eid in road_ids for ref in beliefs.get(eid, {}).get("provenance", [])
+            ]
             routes.append(
                 {
                     "mission_id": mission.id,
+                    "road_ids": road_ids,
                     "title": mission.title,
                     "status": mission.status.value,
                     "points": pts,
@@ -92,6 +117,7 @@ def situation_map(system) -> dict[str, Any]:
                     else None,
                     "information": information.describe(
                         "inferred",
+                        refs=route_refs,
                         note="Planned path on an issued mission ticket; not a tracked journey.",
                     ),
                 }
@@ -121,6 +147,14 @@ def situation_map(system) -> dict[str, Any]:
                 "occupancy": occupancy.get(sh.id),  # recorded; None if nobody has reported it
                 "expected": expected,  # people on missions heading there now
                 "elevation_m": getattr(sh, "elevation_m", None),
+                "approach_evidence_ids": list(
+                    dict.fromkeys(
+                        ref
+                        for route in routes
+                        if route["destination_id"] == sh.id
+                        for ref in route["information"]["evidence_ids"]
+                    )
+                ),
                 "kind": getattr(sh, "kind", None),
                 "information": information.describe(
                     "inferred",
@@ -238,6 +272,8 @@ def situation_map(system) -> dict[str, Any]:
         pass
     return {
         "site": rg.name,
+        "flood_extents": flood_extents,
+        "flood_extent_note": "Only source-supplied polygons are shown. Areas of concern are inferred radii.",
         "areas": areas,
         "teams": teams,
         "bounds": [[min(lats), min(lons)], [max(lats), max(lons)]],
@@ -253,3 +289,28 @@ def situation_map(system) -> dict[str, Any]:
 def _people(mission) -> int:
     m = re.search(r"Evacuate (\d+) people", mission.title or "")
     return int(m.group(1)) if m else 0
+
+
+def _polygon(value) -> bool:
+    """Reject malformed source geometry rather than breaking the map renderer."""
+    if not isinstance(value, dict) or value.get("type") not in {"Polygon", "MultiPolygon"}:
+        return False
+    polygons = (
+        [value.get("coordinates")] if value["type"] == "Polygon" else value.get("coordinates")
+    )
+    if not isinstance(polygons, list) or not polygons:
+        return False
+    for polygon in polygons:
+        if not isinstance(polygon, list) or not polygon:
+            return False
+        for ring in polygon:
+            if not isinstance(ring, list) or len(ring) < 4 or ring[0] != ring[-1]:
+                return False
+            for point in ring:
+                if not isinstance(point, list) or len(point) < 2:
+                    return False
+                if not all(isinstance(n, (int, float)) and math.isfinite(n) for n in point):
+                    return False
+                if abs(point[0]) > 180 or abs(point[1]) > 90:
+                    return False
+    return True
