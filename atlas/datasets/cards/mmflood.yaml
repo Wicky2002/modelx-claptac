@@ -1,0 +1,26 @@
+key: mmflood
+name: "MMFlood: A Multimodal Dataset for Flood Delineation from Satellite Imagery"
+origin: Montello, Arnaudo and Rossi. Masks derived from Copernicus EMS delineations.
+version: "1.0.0"
+doi: 10.1415/mmflood.links
+url: https://zenodo.org/records/6534637
+licence: CC BY 4.0
+licence_source: Zenodo record 6534637
+coverage: 1,748 tiles from 95 Copernicus EMS flood activations in 43 countries, November 2014 to October 2021. No Sri Lankan events.
+variables:
+  - Sentinel-1 VV and VH backscatter (linear power)
+  - Digital elevation model
+  - Hydrography, for 1,012 tiles
+  - Binary flood mask
+label_meaning: "1 is flood and 0 is not flood. Permanent water is not labelled as flood."
+missingness: Hydrography is absent for 736 tiles (42%). Radar pixels with no return in both bands are treated as no data.
+permitted_use: Research and derivative work with attribution, under CC BY 4.0.
+limits:
+  - One post-flood radar image per tile, with no pre-event image, so flood and permanent water look alike.
+  - Some flood masks are speckled at pixel level.
+file: mmflood.zip
+size_bytes: 11156220553
+sha256: 0efa2d2609df4f412edf4bbfe0feed49c7950cc43192fd501b7227297c8542ac
+verified: false
+verification: "Licence and description confirmed on Zenodo, but the team's archive is not byte-identical to the release: 11,156,220,553 bytes against 11,256,598,941, and the MD5 differs. It holds the expected 1,748 tiles and 95 events, and all tiles read without error."
+split_file: mmflood.json

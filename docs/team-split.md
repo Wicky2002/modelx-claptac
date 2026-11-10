@@ -49,7 +49,7 @@ Checked directly from the files.
 | Dataset | Contents | Watch out for |
 |---|---|---|
 | MMFlood | 1,748 tiles, 95 events, 27.2 GB unpacked. Split by event: 1,242 train, 120 val, 386 test. | Hydrography exists for only 1,012 tiles (58%). No Sri Lankan events. |
-| Disaster-news | 7,692 articles, 126,150 sentences, with event, location and impact labels. | Event labels have 9 columns but the proposal lists 8 categories, and no column names are included. 962 articles have no event label. Sentence labels stop at 40 per article (190 articles are longer). Almost all English. |
+| Disaster-news | 7,692 articles, 126,150 sentences, with event, location and impact labels. | Event labels have 9 columns: an event-present flag and the 8 hazards in the proposal. The dataset's published description names them. 962 articles are labelled as no event, so they are negative examples. Sentence labels stop at 40 per article (190 articles are longer). Almost all English. |
 | AIFloodSense | 470 images with flood, building and sky masks. CC BY 4.0. | 64 of the 94 test images come from flood events that are also in the training set. Mostly aerial images. No Sri Lankan images. |
 | Mawiongrim | One CSV: 696 hourly rows, 1–30 December 2022. | **No landslide labels.** Rain in only 13 hours (1.5 max). Soil sensors barely move. |
 

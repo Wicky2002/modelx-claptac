@@ -1,0 +1,26 @@
+key: disaster-news
+name: A dataset to extract event location and impact information from disaster-news articles
+origin: Sumanta Banerjee, published on IEEE DataPort in 2022.
+version: Not stated by the publisher.
+doi: 10.21227/hsdv-2t76
+url: https://ieee-dataport.org/documents/dataset-extract-event-location-and-impact-information-disaster-news-articles
+licence: CC BY 4.0
+licence_source: DataCite record
+coverage: 7,692 news articles and 126,150 sentences. Almost all English. Results must be stated as English-only.
+variables:
+  - Article id and sentence text
+  - Nine event bits per article
+  - Forty location bits per article, one per sentence
+  - Forty impact bits per article, one per sentence
+label_meaning: "Event bits: 0 event present, then covid, flood, storm, heavy rain, cloudburst, landslide, earthquake, tsunami. Location and impact: bit i is 1 when sentence i holds that information."
+missingness: No event labels are missing. 962 articles are labelled as having no disaster event, so they are negative examples. Sentence labels stop at 40 per article, and 190 articles are longer. Shorter articles are padded with zeros.
+permitted_use: Research and derivative work with attribution, under CC BY 4.0.
+limits:
+  - Covers covid as well as natural hazards, so event scores need reporting per class.
+  - No Sinhala or Tamil text.
+file: event_location_impact.zip
+size_bytes: 6597430
+sha256: 58bc8bd2a7a32287df9d5d8ad587cace1073520c6f5fca2d98fd28d381399063
+verified: true
+verification: Licence and the meaning of the labels confirmed in the DataCite record. Bytes were not compared with a publisher checksum.
+split_file: disaster-news.json
