@@ -6,7 +6,7 @@ colorTo: red
 sdk: docker
 app_port: 8000
 pinned: false
-short_description: Agentic flood, landslide and earthquake response for Sri Lanka
+short_description: Agentic flood and landslide response for Sri Lanka
 ---
 
 # ATLAS: Autonomous Triage, Logical Agentic System
