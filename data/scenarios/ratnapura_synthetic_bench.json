@@ -1,0 +1,3145 @@
+{
+  "name": "ratnapura-synthetic-bench",
+  "events": [
+    {
+      "at_seconds": 0,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-000",
+        "type": "water_level",
+        "value": 6.13,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 0,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-000",
+        "type": "soil_moisture",
+        "value": 46.33,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 0,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-000",
+        "type": "tilt",
+        "value": 0.15,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 10,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-010",
+        "type": "water_level",
+        "value": 6.03,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 10,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-010",
+        "type": "soil_moisture",
+        "value": 45.59,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 10,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-010",
+        "type": "tilt",
+        "value": 0.13,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 20,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-020",
+        "type": "water_level",
+        "value": 5.87,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 20,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-020",
+        "type": "soil_moisture",
+        "value": 46.23,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 20,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-020",
+        "type": "tilt",
+        "value": 0.13,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 30,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-030",
+        "type": "water_level",
+        "value": 6.16,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 30,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-030",
+        "type": "soil_moisture",
+        "value": 46.4,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 30,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-030",
+        "type": "tilt",
+        "value": 0.09,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 40,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-040",
+        "type": "water_level",
+        "value": 5.85,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 40,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-040",
+        "type": "soil_moisture",
+        "value": 45.67,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 40,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-040",
+        "type": "tilt",
+        "value": 0.11,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 50,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-050",
+        "type": "water_level",
+        "value": 5.98,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 50,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-050",
+        "type": "soil_moisture",
+        "value": 45.68,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 50,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-050",
+        "type": "tilt",
+        "value": 0.09,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 60,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-060",
+        "type": "water_level",
+        "value": 5.98,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 60,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-060",
+        "type": "soil_moisture",
+        "value": 45.88,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 60,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-060",
+        "type": "tilt",
+        "value": 0.14,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 70,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-070",
+        "type": "water_level",
+        "value": 5.96,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 70,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-070",
+        "type": "soil_moisture",
+        "value": 46.28,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 70,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-070",
+        "type": "tilt",
+        "value": 0.15,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 80,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-080",
+        "type": "water_level",
+        "value": 6.02,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 80,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-080",
+        "type": "soil_moisture",
+        "value": 45.87,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 80,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-080",
+        "type": "tilt",
+        "value": 0.14,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 90,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-090",
+        "type": "water_level",
+        "value": 6.21,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 90,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-090",
+        "type": "soil_moisture",
+        "value": 46.17,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 90,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-090",
+        "type": "tilt",
+        "value": 0.09,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 100,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-100",
+        "type": "water_level",
+        "value": 6.41,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 100,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-100",
+        "type": "soil_moisture",
+        "value": 46.62,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 100,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-100",
+        "type": "tilt",
+        "value": 0.12,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 110,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-110",
+        "type": "water_level",
+        "value": 6.96,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 110,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-110",
+        "type": "soil_moisture",
+        "value": 46.89,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 110,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-110",
+        "type": "tilt",
+        "value": 0.11,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 120,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-120",
+        "type": "water_level",
+        "value": 7.33,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 120,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-120",
+        "type": "soil_moisture",
+        "value": 47.51,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 120,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-120",
+        "type": "tilt",
+        "value": 0.14,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 130,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-130",
+        "type": "water_level",
+        "value": 7.72,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 130,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-130",
+        "type": "soil_moisture",
+        "value": 48.09,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 130,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-130",
+        "type": "tilt",
+        "value": 0.13,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 140,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-140",
+        "type": "water_level",
+        "value": 8.0,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 140,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-140",
+        "type": "soil_moisture",
+        "value": 48.56,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 140,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-140",
+        "type": "tilt",
+        "value": 0.09,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 150,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-150",
+        "type": "water_level",
+        "value": 8.41,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 150,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-150",
+        "type": "soil_moisture",
+        "value": 49.08,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 150,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-150",
+        "type": "tilt",
+        "value": 0.98,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 160,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-160",
+        "type": "water_level",
+        "value": 8.92,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 160,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-160",
+        "type": "soil_moisture",
+        "value": 50.04,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 160,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-160",
+        "type": "tilt",
+        "value": 0.12,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 170,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-170",
+        "type": "water_level",
+        "value": 9.64,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 170,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-170",
+        "type": "soil_moisture",
+        "value": 51.5,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 170,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-170",
+        "type": "tilt",
+        "value": 0.1,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 180,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-180",
+        "type": "water_level",
+        "value": 10.16,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 180,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-180",
+        "type": "soil_moisture",
+        "value": 52.55,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 180,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-180",
+        "type": "tilt",
+        "value": 0.16,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 190,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-190",
+        "type": "water_level",
+        "value": 10.75,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 190,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-190",
+        "type": "soil_moisture",
+        "value": 52.73,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 190,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-190",
+        "type": "tilt",
+        "value": 0.1,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 200,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-200",
+        "type": "water_level",
+        "value": 11.54,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 200,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-200",
+        "type": "soil_moisture",
+        "value": 54.26,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 200,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-200",
+        "type": "tilt",
+        "value": 0.08,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 210,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-210",
+        "type": "water_level",
+        "value": 12.26,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 210,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-210",
+        "type": "soil_moisture",
+        "value": 55.39,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 210,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-210",
+        "type": "tilt",
+        "value": 0.16,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 220,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-220",
+        "type": "water_level",
+        "value": 13.09,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 220,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-220",
+        "type": "soil_moisture",
+        "value": 56.59,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 220,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-220",
+        "type": "tilt",
+        "value": 0.15,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 230,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-230",
+        "type": "water_level",
+        "value": 13.68,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 230,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-230",
+        "type": "soil_moisture",
+        "value": 57.71,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 230,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-230",
+        "type": "tilt",
+        "value": 0.14,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 240,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-240",
+        "type": "water_level",
+        "value": 14.5,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 240,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-240",
+        "type": "soil_moisture",
+        "value": 59.16,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 240,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-240",
+        "type": "tilt",
+        "value": 0.1,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 250,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-250",
+        "type": "water_level",
+        "value": 15.09,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 250,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-250",
+        "type": "soil_moisture",
+        "value": 60.7,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 250,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-250",
+        "type": "tilt",
+        "value": 0.13,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 260,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-260",
+        "type": "water_level",
+        "value": 15.99,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 260,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-260",
+        "type": "soil_moisture",
+        "value": 61.78,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 260,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-260",
+        "type": "tilt",
+        "value": 0.14,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 270,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-270",
+        "type": "water_level",
+        "value": 16.66,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 270,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-270",
+        "type": "soil_moisture",
+        "value": 63.23,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 270,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-270",
+        "type": "tilt",
+        "value": 0.16,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 280,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-280",
+        "type": "water_level",
+        "value": 17.76,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 280,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-280",
+        "type": "soil_moisture",
+        "value": 64.53,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 280,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-280",
+        "type": "tilt",
+        "value": 0.14,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 290,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-290",
+        "type": "water_level",
+        "value": 18.56,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 290,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-290",
+        "type": "soil_moisture",
+        "value": 65.56,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 290,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-290",
+        "type": "tilt",
+        "value": 0.24,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 300,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-300",
+        "type": "water_level",
+        "value": 19.28,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 300,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-300",
+        "type": "soil_moisture",
+        "value": 67.0,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 300,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-300",
+        "type": "tilt",
+        "value": 0.32,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 310,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-310",
+        "type": "water_level",
+        "value": 20.08,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 310,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-310",
+        "type": "soil_moisture",
+        "value": 68.67,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 310,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-310",
+        "type": "tilt",
+        "value": 0.36,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 320,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-320",
+        "type": "water_level",
+        "value": 20.69,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 320,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-320",
+        "type": "soil_moisture",
+        "value": 70.14,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 320,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-320",
+        "type": "tilt",
+        "value": 0.48,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 330,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-330",
+        "type": "water_level",
+        "value": 21.47,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 330,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-330",
+        "type": "soil_moisture",
+        "value": 71.67,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 330,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-330",
+        "type": "tilt",
+        "value": 0.66,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 340,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-340",
+        "type": "water_level",
+        "value": 22.48,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 340,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-340",
+        "type": "soil_moisture",
+        "value": 72.84,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 340,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-340",
+        "type": "tilt",
+        "value": 0.78,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 350,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-350",
+        "type": "water_level",
+        "value": 22.88,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 350,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-350",
+        "type": "soil_moisture",
+        "value": 74.39,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 350,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-350",
+        "type": "tilt",
+        "value": 0.89,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 360,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-360",
+        "type": "water_level",
+        "value": 23.88,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 360,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-360",
+        "type": "soil_moisture",
+        "value": 75.68,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 360,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-360",
+        "type": "tilt",
+        "value": 1.02,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 370,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-370",
+        "type": "water_level",
+        "value": 24.36,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 370,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-370",
+        "type": "soil_moisture",
+        "value": 76.91,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 370,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-370",
+        "type": "tilt",
+        "value": 1.23,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 380,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-380",
+        "type": "water_level",
+        "value": 25.21,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 380,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-380",
+        "type": "soil_moisture",
+        "value": 77.76,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 380,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-380",
+        "type": "tilt",
+        "value": 1.31,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 390,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-390",
+        "type": "water_level",
+        "value": 25.87,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 390,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-390",
+        "type": "soil_moisture",
+        "value": 79.38,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 390,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-390",
+        "type": "tilt",
+        "value": 1.49,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 400,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-400",
+        "type": "water_level",
+        "value": 26.43,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 400,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-400",
+        "type": "soil_moisture",
+        "value": 80.87,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 400,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-400",
+        "type": "tilt",
+        "value": 1.63,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 410,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-410",
+        "type": "water_level",
+        "value": 27.0,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 410,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-410",
+        "type": "soil_moisture",
+        "value": 82.01,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 410,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-410",
+        "type": "tilt",
+        "value": 1.84,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 420,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-420",
+        "type": "water_level",
+        "value": 27.4,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 420,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-420",
+        "type": "soil_moisture",
+        "value": 83.17,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 420,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-420",
+        "type": "tilt",
+        "value": 1.94,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 430,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-430",
+        "type": "water_level",
+        "value": 28.08,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 430,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-430",
+        "type": "soil_moisture",
+        "value": 83.68,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 430,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-430",
+        "type": "tilt",
+        "value": 2.13,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 440,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-440",
+        "type": "water_level",
+        "value": 28.26,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 440,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-440",
+        "type": "soil_moisture",
+        "value": 84.66,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 440,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-440",
+        "type": "tilt",
+        "value": 2.27,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 450,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-450",
+        "type": "water_level",
+        "value": 29.0,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 450,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-450",
+        "type": "soil_moisture",
+        "value": 86.18,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 450,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-450",
+        "type": "tilt",
+        "value": 2.37,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 460,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-460",
+        "type": "water_level",
+        "value": 29.0,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 460,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-460",
+        "type": "soil_moisture",
+        "value": 86.88,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 460,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-460",
+        "type": "tilt",
+        "value": 2.45,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 470,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-470",
+        "type": "water_level",
+        "value": 29.5,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 470,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-470",
+        "type": "soil_moisture",
+        "value": 87.13,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 470,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-470",
+        "type": "tilt",
+        "value": 2.53,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 480,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-480",
+        "type": "water_level",
+        "value": 29.77,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 480,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-480",
+        "type": "soil_moisture",
+        "value": 87.78,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 480,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-480",
+        "type": "tilt",
+        "value": 2.62,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 490,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-490",
+        "type": "water_level",
+        "value": 30.02,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 490,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-490",
+        "type": "soil_moisture",
+        "value": 89.04,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 490,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-490",
+        "type": "tilt",
+        "value": 2.68,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 500,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-500",
+        "type": "water_level",
+        "value": 30.09,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 500,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-500",
+        "type": "soil_moisture",
+        "value": 89.41,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 500,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-500",
+        "type": "tilt",
+        "value": 2.72,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 510,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-510",
+        "type": "water_level",
+        "value": 29.91,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 510,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-510",
+        "type": "soil_moisture",
+        "value": 89.34,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 510,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-510",
+        "type": "tilt",
+        "value": 2.73,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 520,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-520",
+        "type": "water_level",
+        "value": 30.12,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 520,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-520",
+        "type": "soil_moisture",
+        "value": 89.49,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 520,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-520",
+        "type": "tilt",
+        "value": 2.78,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 530,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-530",
+        "type": "water_level",
+        "value": 29.85,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 530,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-530",
+        "type": "soil_moisture",
+        "value": 89.91,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 530,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-530",
+        "type": "tilt",
+        "value": 2.7,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 540,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-540",
+        "type": "water_level",
+        "value": 30.02,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 540,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-540",
+        "type": "soil_moisture",
+        "value": 90.37,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 540,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-540",
+        "type": "tilt",
+        "value": 2.76,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 550,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-550",
+        "type": "water_level",
+        "value": 30.17,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 550,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-550",
+        "type": "soil_moisture",
+        "value": 89.62,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 550,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-550",
+        "type": "tilt",
+        "value": 2.76,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 560,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-560",
+        "type": "water_level",
+        "value": 29.86,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 560,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-560",
+        "type": "soil_moisture",
+        "value": 89.73,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 560,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-560",
+        "type": "tilt",
+        "value": 2.71,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 570,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-570",
+        "type": "water_level",
+        "value": 29.83,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 570,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-570",
+        "type": "soil_moisture",
+        "value": 90.34,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 570,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-570",
+        "type": "tilt",
+        "value": 2.77,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 580,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-580",
+        "type": "water_level",
+        "value": 30.12,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 580,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-580",
+        "type": "soil_moisture",
+        "value": 89.6,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 580,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-580",
+        "type": "tilt",
+        "value": 2.77,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 590,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-590",
+        "type": "water_level",
+        "value": 30.1,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 590,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-590",
+        "type": "soil_moisture",
+        "value": 90.29,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 590,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-590",
+        "type": "tilt",
+        "value": 2.77,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 600,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-river-01",
+        "sensor_id": "water-01",
+        "measurement_id": "synthetic-water-01-600",
+        "type": "water_level",
+        "value": 30.0,
+        "unit": "cm",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 600,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "soil-01",
+        "measurement_id": "synthetic-soil-01-600",
+        "type": "soil_moisture",
+        "value": 89.68,
+        "unit": "%",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    },
+    {
+      "at_seconds": 600,
+      "payload": {
+        "kind": "sensor",
+        "node_id": "bench-slope-02",
+        "sensor_id": "tilt-01",
+        "measurement_id": "synthetic-tilt-01-600",
+        "type": "tilt",
+        "value": 2.7,
+        "unit": "deg",
+        "location": {
+          "lat": 6.6828,
+          "lon": 80.3992,
+          "area_id": "ratnapura-demo-river"
+        }
+      }
+    }
+  ],
+  "title": "Ratnapura tabletop sensors (synthetic exercise)",
+  "hazard": "landslide",
+  "area_id": "ratnapura-demo-river",
+  "real": false,
+  "recording_kind": "synthetic_bench",
+  "source": "deterministic simulation; no hardware measurements",
+  "seed": 1709,
+  "story": "Two simulated nodes sample every 10 seconds. A container fills, soil is wetted, and a slope board gradually tilts after one brief vibration.",
+  "replay_minutes": 10.0,
+  "observed_ranges": {
+    "soil_moisture (%)": {
+      "min": 45.59,
+      "max": 90.37
+    },
+    "tilt (deg)": {
+      "min": 0.08,
+      "max": 2.78
+    },
+    "water_level (cm)": {
+      "min": 5.85,
+      "max": 30.17
+    }
+  },
+  "assumptions": [
+    "All measurements are synthetic and are not evidence of a real disaster or hardware performance.",
+    "Water uses the 0\u201340 cm tabletop scale in data/reference/sensor_map.yaml, not river depth.",
+    "Tilt is degrees from the installed angle; the 2-degree A1 threshold is a demo value.",
+    "The coordinates and area ID are the existing Ratnapura demo mapping, not a physical bench site."
+  ]
+}
