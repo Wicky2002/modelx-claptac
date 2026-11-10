@@ -24,18 +24,33 @@ def truth_of(articles) -> Outputs:
     return truth(articles)
 
 
-def transformer_report(run: Path, articles, gold: Outputs) -> dict:
+def transformer_reports(run: Path, val, articles, gold: Outputs) -> dict:
+    """The transformer alone, and the hybrid whose per-hazard rules are chosen on validation."""
     import torch
     from transformers import AutoTokenizer
 
+    from training.reports import hybrid
     from training.reports.model import NAME, ReportModel, predict
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     state = torch.load(run / "best.pt", map_location=device, weights_only=True)
     model = ReportModel().to(device)
     model.load_state_dict(state["model"])
-    scores = predict(model, AutoTokenizer.from_pretrained(NAME), articles, device)
-    return {**report(decide(scores, state["thresholds"]), gold), "best_epoch": state["epoch"]}
+    tokenizer = AutoTokenizer.from_pretrained(NAME)
+    val_scores = predict(model, tokenizer, val, device)
+    rules = hybrid.fit(keyword_predict(val), val_scores, truth_of(val))
+    scores = val_scores if articles is val else predict(model, tokenizer, articles, device)
+    sentence = {"location": state["thresholds"]["location"], "impact": state["thresholds"]["impact"]}
+    return {
+        "transformer": {
+            **report(decide(scores, state["thresholds"]), gold),
+            "best_epoch": state["epoch"],
+        },
+        "hybrid": {
+            **report(hybrid.decide(keyword_predict(articles), scores, rules, sentence), gold),
+            "rules": rules,
+        },
+    }
 
 
 def main() -> None:
@@ -53,7 +68,8 @@ def main() -> None:
         if out.exists():
             p.error(f"{out} already exists; the test articles have been scored")
 
-    articles = load(args.data)[args.split]
+    data = load(args.data)
+    articles = data[args.split]
     gold = truth_of(articles)
     summary = {
         "split": args.split,
@@ -62,11 +78,11 @@ def main() -> None:
         "keywords": report(keyword_predict(articles), gold),
     }
     if not args.baseline_only:
-        summary["transformer"] = transformer_report(args.run, articles, gold)
+        summary.update(transformer_reports(args.run, data["val"], articles, gold))
 
     args.run.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    for name in ("keywords", "transformer"):
+    for name in ("keywords", "transformer", "hybrid"):
         if name in summary:
             s = summary[name]
             print(
