@@ -48,6 +48,10 @@ def create_app(settings=None):
         monitors = app.state.monitor_worker = MonitorWorker(system, app.state.eval_store)
         try:
             await runtime.start()
+            if os.getenv("ATLAS_REGISTER_TRAINED_MODELS") == "1":
+                from atlas.learning.trained import register_trained
+
+                register_trained(runtime.models)
             control.start_worker()
             system.intelligence.start_worker()
             monitors.start()
