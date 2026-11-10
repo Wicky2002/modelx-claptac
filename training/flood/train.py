@@ -74,6 +74,7 @@ def main() -> None:
     p.add_argument(
         "--pos-weight", type=float, default=2.0, help="flood-centred crops already raise flood share"
     )
+    p.add_argument("--encoder", choices=["resnet34", "resnet50"], default="resnet34")
     p.add_argument("--dice-weight", type=float, default=1.0)
     p.add_argument("--weight-decay", type=float, default=0.01)
     p.add_argument("--encoder-ratio", type=float, default=0.1, help="encoder lr as a share of --lr")
@@ -121,7 +122,7 @@ def main() -> None:
         drop_last=True,
         pin_memory=True,
     )
-    model = FloodUNet().to(device)
+    model = FloodUNet(encoder=args.encoder).to(device)
     encoder = [q for n, q in model.named_parameters() if n.startswith(("stem", "encoder"))]
     decoder = [q for n, q in model.named_parameters() if not n.startswith(("stem", "encoder"))]
     opt = torch.optim.AdamW(
@@ -181,6 +182,7 @@ def main() -> None:
                             "threshold": row["val"]["threshold"],
                             "epoch": epoch,
                             "window": args.crop,
+                            "encoder": args.encoder,
                         },
                         args.run / "best.pt",
                     )

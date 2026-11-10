@@ -61,7 +61,7 @@ def unet_scorer(checkpoint: Path, stats: dict) -> tuple[Scorer, dict]:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     state = torch.load(checkpoint, map_location=device, weights_only=True)
-    model = FloodUNet(pretrained=False).to(device)
+    model = FloodUNet(pretrained=False, encoder=state.get("encoder", "resnet34")).to(device)
     model.load_state_dict(state["model"])
     model.eval()
 

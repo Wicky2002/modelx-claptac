@@ -1,11 +1,11 @@
-"""U-Net with a pretrained ResNet-34 encoder, and full-tile prediction by overlapping windows."""
+"""U-Net with a pretrained ResNet encoder, and full-tile prediction by overlapping windows."""
 
 from __future__ import annotations
 
 import numpy as np
 import torch
 from torch import nn
-from torchvision.models import ResNet34_Weights, resnet34
+from torchvision.models import ResNet34_Weights, ResNet50_Weights, resnet34, resnet50
 
 from training.flood.data import CHANNELS
 
@@ -32,19 +32,29 @@ class Up(nn.Module):
         return self.conv(x if skip is None else torch.cat([x, skip], 1))
 
 
+ENCODERS = {
+    # name: (builder, ImageNet weights, channels of layer1..layer4)
+    "resnet34": (resnet34, ResNet34_Weights.IMAGENET1K_V1, (64, 128, 256, 512)),
+    "resnet50": (resnet50, ResNet50_Weights.IMAGENET1K_V2, (256, 512, 1024, 2048)),
+}
+
+
 class FloodUNet(nn.Module):
-    def __init__(self, channels: int = CHANNELS, pretrained: bool = True) -> None:
+    def __init__(
+        self, channels: int = CHANNELS, pretrained: bool = True, encoder: str = "resnet34"
+    ) -> None:
         super().__init__()
-        net = resnet34(weights=ResNet34_Weights.IMAGENET1K_V1 if pretrained else None)
+        build, weights, (c1, c2, c3, c4) = ENCODERS[encoder]
+        net = build(weights=weights if pretrained else None)
         first = nn.Conv2d(channels, 64, 7, stride=2, padding=3, bias=False)
         with torch.no_grad():  # every new input channel starts from the average of the RGB filters
             first.weight[:] = net.conv1.weight.mean(1, keepdim=True).repeat(1, channels, 1, 1)
         self.stem = nn.Sequential(first, net.bn1, net.relu)
         self.pool = net.maxpool
         self.encoder = nn.ModuleList([net.layer1, net.layer2, net.layer3, net.layer4])
-        self.up4 = Up(512, 256, 256)
-        self.up3 = Up(256, 128, 128)
-        self.up2 = Up(128, 64, 64)
+        self.up4 = Up(c4, c3, 256)
+        self.up3 = Up(256, c2, 128)
+        self.up2 = Up(128, c1, 64)
         self.up1 = Up(64, 64, 32)
         self.up0 = Up(32, 0, 16)
         self.head = nn.Conv2d(16, 1, 1)
