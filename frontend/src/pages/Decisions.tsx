@@ -1,3 +1,4 @@
+import { CommunicationPreview } from "../components/CommunicationPreview";
 import { useState } from "react";
 import { api, ApiError, usePoll, type Approval } from "../api";
 import { ago, describeAction, place, readable, whyHuman } from "../plain";
@@ -56,7 +57,8 @@ export function DecisionsPage() {
           <span className="chip warn">Proposed action · awaiting approval</span>
           <div className="decision-what">{describeAction(a.action)}</div>
           <div className="decision-why"><b>Why ATLAS suggests it:</b> {a.action.rationale ? readable(a.action.rationale) : "Part of the current response plan."}</div>
-          <div className="decision-why"><b>Why it needs you:</b> {a.reason || whyHuman(a.action)}</div>
+          <div className="decision-why"><b>Why it needs you:</b> {a.reason === "high_consequence" || !a.reason ? whyHuman(a.action) : a.reason.replace(/_/g, " ")}</div>
+          {a.action.action_type === "publish_alert" && <CommunicationPreview approvalId={a.id} />}
           <input placeholder="Optional note (kept with your decision)" value={note[a.id] ?? ""} onChange={(e) => setNote({ ...note, [a.id]: e.target.value })} style={{ width: "100%", margin: "8px 0" }} />
           <div className="row">
             <button className="btn primary big" disabled={busy !== null} onClick={() => decide(a, "approve")}>✓ Approve</button>

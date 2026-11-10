@@ -1,3 +1,4 @@
+import { SourceHealth } from "../components/SourceHealth";
 import { usePoll, type Approval, type ScenarioInfo } from "../api";
 import { ago, describeAction, friendly, missionStatus, place, readable, type Alert, type Incident, type Mission, type Sitrep } from "../plain";
 
@@ -46,10 +47,10 @@ export function OverviewPage() {
   const over = (sensors.data ?? []).filter((s) => s.threshold != null && s.value >= s.threshold);
 
   const headline = open.length === 0
-    ? { tone: "ok", text: "All quiet. No incident is open." }
+    ? { tone: "ok", text: "No incident is recorded. Check source health before drawing conclusions." }
     : waiting.length
       ? { tone: "warn", text: `${open.length === 1 ? "An incident is" : `${open.length} incidents are`} open, and ${waiting.length} decision${waiting.length > 1 ? "s are" : " is"} waiting for you.` }
-      : { tone: "bad", text: `${open.length === 1 ? "An incident is" : `${open.length} incidents are`} open. ATLAS is responding; nothing is waiting for you.` };
+      : { tone: "bad", text: `${open.length === 1 ? "An incident is" : `${open.length} incidents are`} open. response records are available. No approval is pending.` };
 
   return (
     <div className="page ops">
@@ -62,11 +63,12 @@ export function OverviewPage() {
 
       <div className="grid g4" style={{ margin: "14px 0" }}>
         <a className="card stat" href="#/decisions"><div className="kpi" style={{ color: waiting.length ? "var(--warn)" : undefined }}>{waiting.length}<small>decisions waiting for you</small></div></a>
-        <a className="card stat" href="#/missions"><div className="kpi">{active.length}<small>missions under way{people ? `, moving ${people} people` : ""}</small></div></a>
-        <a className="card stat" href="#/alerts"><div className="kpi">{liveAlerts.length}<small>public alerts out now</small></div></a>
+        <a className="card stat" href="#/missions"><div className="kpi">{active.length}<small>active mission tickets{people ? `, ${people} people planned` : ""}</small></div></a>
+        <a className="card stat" href="#/alerts"><div className="kpi">{liveAlerts.length}<small>active alert records</small></div></a>
         <a className="card stat" href="#/map"><div className="kpi" style={{ color: over.length ? "var(--bad)" : undefined }}>{over.length}<small>readings above the danger line</small></div></a>
       </div>
 
+      <SourceHealth />
       <div className="grid g2">
         <div className="card">
           <h2>Needs your decision</h2>
@@ -132,7 +134,7 @@ export function OverviewPage() {
           {open.map((i) => (
             <div key={i.incident_id} className="line-item">
               <span><b>{place(i.incident_id)}</b><br /><span className="muted sm">opened {ago(i.first_seen)} · {i.active_missions} missions · last update {ago(i.last_seen)}</span></span>
-              <a className="btn" href="#/map">See on map</a>
+              <a className="btn" href={`#/incidents/${encodeURIComponent(i.incident_id)}`}>Review incident</a>
             </div>
           ))}
         </div>
