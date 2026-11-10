@@ -3,6 +3,9 @@ node_id: rtp-node-01
 interval_seconds: 10
 buffer_size: 5000
 buffer_path: sensor-buffer.db
+# Optional H3 bench capture. Use a different path on each node; copy the JSONL files
+# to the laptop after the test and combine them with atlas.datasets.bench_recording.
+# recording_path: recordings/bench-node-01.jsonl
 log_level: INFO
 
 # Where this node sits. area_id / lat-lon are mapped to COP areas and OSM edges server-side.
