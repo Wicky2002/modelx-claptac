@@ -1,11 +1,15 @@
-"""Combine trained flood models: average several, average over flips and rotations, smooth, then threshold.
+"""Combine trained flood models into one calibrated, terrain-aware flood map with an uncertainty layer.
 
     python -m training.flood.combine --cache <cache> --runs <run> <run> ... --out <dir> --split val
     python -m training.flood.combine --cache <cache> --runs <run> <run> ... --out <dir> --split test
 
-On validation it tries every subset of the runs, with and without the eight flips and rotations, and a
-few smoothing widths, and keeps the best by mean event F1. The test events are then scored once with that
-choice only, beside the VV baseline. A second test attempt stops before reading any test tile.
+Validation, in two stages so the choices stay few:
+  1. which runs to average, with or without the eight flips and rotations;
+  2. for that pick, how much to smooth and which slopes to rule out. Radar shadow on steep slopes is
+     dark like water, and flood water cannot rest on a steep slope.
+Then one temperature is fitted so that the probabilities mean what they say, and the spread between the
+runs gives a per-pixel uncertainty. The test events are scored once with these choices, beside the VV
+baseline. A second test attempt stops before reading any test tile.
 """
 
 from __future__ import annotations
@@ -23,6 +27,9 @@ from training.flood.evaluate import baseline_scorer, pooled_best_threshold, scor
 from training.flood.metrics import ScoreHistogram, report
 
 SMOOTHING = (1, 3, 5, 7)
+SLOPES = (None, 10.0, 15.0, 20.0, 30.0)
+PIXEL_M = 10.0  # MMFlood tiles and the Sentinel-1 scenes are about 10 m
+TEMPERATURES = tuple(np.round(np.exp(np.linspace(np.log(0.25), np.log(4.0), 41)), 4))
 
 
 def dihedral(x: np.ndarray, k: int) -> np.ndarray:
@@ -54,14 +61,63 @@ def smooth(p: np.ndarray, width: int) -> np.ndarray:
     return (s / (width * width)).astype(np.float32)
 
 
-def options(members: list[str]) -> list[dict]:
+def slope_degrees(relative: np.ndarray, pixel_m: float = PIXEL_M) -> np.ndarray:
+    """Slope from the relative-elevation channel, which is height in hundreds of metres."""
+    dy, dx = np.gradient(relative.astype(np.float32) * 100.0, pixel_m)
+    return np.degrees(np.arctan(np.hypot(dx, dy))).astype(np.float32)
+
+
+def finish(parts: list[np.ndarray], width: int, slope: np.ndarray | None, cutoff) -> np.ndarray:
+    """Average the runs, smooth, and rule out slopes steeper than the cutoff."""
+    p = smooth(np.mean(parts, axis=0), width)
+    if cutoff is not None and slope is not None:
+        p = np.where(slope > cutoff, 0.0, p).astype(np.float32)
+    return p
+
+
+def logit(p: np.ndarray) -> np.ndarray:
+    p = np.clip(p.astype(np.float64), 1e-6, 1 - 1e-6)
+    return np.log(p / (1 - p))
+
+
+def calibrate(p: np.ndarray, temperature: float) -> np.ndarray:
+    return (1 / (1 + np.exp(-logit(p) / temperature))).astype(np.float32)
+
+
+def fit_temperature(p: np.ndarray, y: np.ndarray) -> float:
+    """The temperature with the lowest log loss. Fitted on validation pixels only."""
+    z = logit(p)
+    best, best_loss = 1.0, np.inf
+    for t in TEMPERATURES:
+        q = np.clip(1 / (1 + np.exp(-z / t)), 1e-6, 1 - 1e-6)
+        loss = -np.mean(y * np.log(q) + (1 - y) * np.log(1 - q))
+        if loss < best_loss:
+            best, best_loss = float(t), loss
+    return best
+
+
+def expected_calibration_error(p: np.ndarray, y: np.ndarray, bins: int = 10) -> float:
+    """How far stated probabilities sit from observed flood rates, weighted by pixel count."""
+    idx = np.minimum((p * bins).astype(int), bins - 1)
+    error = 0.0
+    for b in range(bins):
+        sel = idx == b
+        if sel.any():
+            error += sel.mean() * abs(p[sel].mean() - y[sel].mean())
+    return float(error)
+
+
+def first_stage(members: list[str]) -> list[dict]:
     out = []
     for size in range(1, len(members) + 1):
         for subset in itertools.combinations(members, size):
             for tta in (False, True):
-                for width in SMOOTHING:
-                    out.append({"members": list(subset), "tta": tta, "smooth": width})
+                out.append({"members": list(subset), "tta": tta, "smooth": 1, "slope": None})
     return out
+
+
+def second_stage(pick: dict) -> list[dict]:
+    return [{**pick, "smooth": w, "slope": s} for w in SMOOTHING for s in SLOPES]
 
 
 def load(run: Path, device):
@@ -114,8 +170,32 @@ def _histograms(tiles, cache: Path, score) -> dict[str, ScoreHistogram]:
     return dict(by_event)
 
 
+def _pixels(tiles, cache: Path, score, step: int = 37):
+    """A thinned sample of valid pixels: probabilities and labels, for calibration."""
+    ps, ys = [], []
+    for _, name in tiles:
+        y = np.load(cache / f"{name}.y.npy").ravel()
+        p = score(name).ravel()
+        keep = np.flatnonzero(y != IGNORE)[::step]
+        ps.append(p[keep])
+        ys.append(y[keep].astype(np.float64))
+    return np.concatenate(ps), np.concatenate(ys)
+
+
 def _baseline(cache: Path):
     return lambda tile: baseline_scorer(np.load(cache / f"{tile}.x.npy"))
+
+
+def _row(option: dict, by_event) -> dict:
+    threshold = pooled_best_threshold(by_event)
+    scores = report(by_event, threshold)
+    return {
+        **option,
+        "threshold": threshold,
+        "mean_event_f1": scores["mean_event_f1"],
+        "mean_event_iou": scores["mean_event_iou"],
+        "all_pixels": scores["all_pixels"],
+    }
 
 
 def main() -> None:
@@ -140,32 +220,43 @@ def main() -> None:
             for tta in (False, True):
                 folders[(name, tta)] = _cached(run, tiles, args.cache, stats, args.out, tta, device)
                 print("probabilities ready", name, "tta" if tta else "", flush=True)
-        table = []
-        for option in options(list(runs)):
+        slopes = {n: slope_degrees(np.load(args.cache / f"{n}.x.npy")[2]) for _, n in tiles}
 
-            def score(tile, option=option):
+        def scorer(option):
+            def score(tile):
                 parts = [
                     np.load(folders[(m, option["tta"])] / f"{tile}.npy").astype(np.float32)
                     for m in option["members"]
                 ]
-                return smooth(np.mean(parts, axis=0), option["smooth"])
+                return finish(parts, option["smooth"], slopes[tile], option["slope"])
 
-            by_event = _histograms(tiles, args.cache, score)
-            threshold = pooled_best_threshold(by_event)
-            scores = report(by_event, threshold)
-            row = {
-                **option,
-                "threshold": threshold,
-                "mean_event_f1": scores["mean_event_f1"],
-                "mean_event_iou": scores["mean_event_iou"],
-                "all_pixels": scores["all_pixels"],
-            }
-            table.append(row)
-            print({k: row[k] for k in ("members", "tta", "smooth", "mean_event_f1")}, flush=True)
+            return score
+
+        table = []
+        for option in first_stage(list(runs)):
+            table.append(_row(option, _histograms(tiles, args.cache, scorer(option))))
+            print({k: table[-1][k] for k in ("members", "tta", "mean_event_f1")}, flush=True)
+        pick = max(table, key=lambda r: r["mean_event_f1"])
+        pick = {k: pick[k] for k in ("members", "tta", "smooth", "slope")}
+        for option in second_stage(pick):
+            if option == pick:
+                continue
+            table.append(_row(option, _histograms(tiles, args.cache, scorer(option))))
+            print({k: table[-1][k] for k in ("smooth", "slope", "mean_event_f1")}, flush=True)
         table.sort(key=lambda r: -r["mean_event_f1"])
+        choice = dict(table[0])
+        sample_p, sample_y = _pixels(tiles, args.cache, scorer(choice))
+        choice["temperature"] = fit_temperature(sample_p, sample_y)
+        choice["val_ece_before"] = expected_calibration_error(sample_p, sample_y)
+        choice["val_ece_after"] = expected_calibration_error(
+            calibrate(sample_p, choice["temperature"]), sample_y
+        )
+        choice["calibrated_threshold"] = float(
+            calibrate(np.array([choice["threshold"]]), choice["temperature"])[0]
+        )
         (args.out / "val_table.json").write_text(json.dumps(table, indent=2), encoding="utf-8")
-        (args.out / "choice.json").write_text(json.dumps(table[0], indent=2), encoding="utf-8")
-        print("chosen", table[0], flush=True)
+        (args.out / "choice.json").write_text(json.dumps(choice, indent=2), encoding="utf-8")
+        print("chosen", {k: v for k, v in choice.items() if k != "all_pixels"}, flush=True)
         return
 
     out = args.out / "report_test.json"
@@ -174,22 +265,45 @@ def main() -> None:
     choice = json.loads((args.out / "choice.json").read_text(encoding="utf-8"))
     val, tiles = usable(manifest, "val"), usable(manifest, "test")
     models = [load(runs[m], device) for m in choice["members"]]
+    memo: dict[str, np.ndarray] = {}
 
     def combined(tile):
-        x = np.load(args.cache / f"{tile}.x.npy")
-        parts = [probability(m, w, x, stats, device, choice["tta"]) for m, w in models]
-        return smooth(np.mean(parts, axis=0), choice["smooth"])
+        if tile not in memo:
+            memo.clear()  # one tile at a time: scored for the histogram, then for calibration
+            x = np.load(args.cache / f"{tile}.x.npy")
+            parts = [probability(m, w, x, stats, device, choice["tta"]) for m, w in models]
+            memo[tile] = finish(parts, choice["smooth"], slope_degrees(x[2]), choice["slope"])
+        return memo[tile]
+
+    by_event: dict[str, ScoreHistogram] = defaultdict(ScoreHistogram)
+    ps, ys = [], []
+    for event, name in tiles:
+        y = np.load(args.cache / f"{name}.y.npy")
+        keep = y != IGNORE
+        score = combined(name)
+        by_event[event].add(score[keep], y[keep])
+        flat = np.flatnonzero(keep.ravel())[::37]
+        ps.append(score.ravel()[flat])
+        ys.append(y.ravel()[flat].astype(np.float64))
+    sample_p, sample_y = np.concatenate(ps), np.concatenate(ys)
 
     base_threshold = pooled_best_threshold(_histograms(val, args.cache, _baseline(args.cache)))
+    keys = ("members", "tta", "smooth", "slope", "threshold", "temperature")
     summary = {
         "split": "test",
         "tiles": len(tiles),
-        "choice": {k: choice[k] for k in ("members", "tta", "smooth", "threshold")},
+        "choice": {k: choice[k] for k in keys},
         "baseline": {
             **report(_histograms(tiles, args.cache, _baseline(args.cache)), base_threshold),
             "threshold_db": score_to_db(base_threshold),
         },
-        "combined": report(_histograms(tiles, args.cache, combined), choice["threshold"]),
+        "combined": report(dict(by_event), choice["threshold"]),
+        "calibration": {
+            "ece_before": expected_calibration_error(sample_p, sample_y),
+            "ece_after": expected_calibration_error(
+                calibrate(sample_p, choice["temperature"]), sample_y
+            ),
+        },
     }
     out.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     for name in ("baseline", "combined"):
@@ -199,6 +313,7 @@ def main() -> None:
             f" mean-event F1 {s['mean_event_f1']:.3f} IoU {s['mean_event_iou']:.3f}",
             flush=True,
         )
+    print("calibration", summary["calibration"], flush=True)
 
 
 if __name__ == "__main__":
