@@ -102,6 +102,7 @@
             "events.flood_scene",
             "events.information_gap",
             "events.mission_status",
+            "events.model_review",
             "events.observation",
             "events.observation_rejected",
             "events.observation_validated",

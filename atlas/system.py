@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from atlas.agents.a10_data_learning import DataLearning, LedgerView, RegistryView
 from atlas.agents.wiring import RoutingPlane, attach_routing
 from atlas.control.wiring import ControlPlane, attach_control
 from atlas.orchestration.wiring import OrchestrationPlane, attach_orchestration
@@ -22,6 +23,7 @@ class System:
     orchestration: OrchestrationPlane
     control: ControlPlane
     intelligence: object = None
+    learning: DataLearning | None = None
 
 
 def attach_all(
@@ -40,4 +42,10 @@ def attach_all(
 
     system = System(runtime, routing, orchestration, control)
     system.intelligence = IntelligenceService(system)
+    system.learning = DataLearning(
+        RegistryView(runtime.models),
+        LedgerView(runtime.ledger),
+        runtime.bus.publish,
+        clock=runtime.clock,
+    )
     return system

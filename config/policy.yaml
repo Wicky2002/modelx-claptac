@@ -5,7 +5,7 @@
 # `when` narrows a high consequence: the action is HIGH only if every condition holds.
 # A condition whose parameter is missing or malformed is treated as holding (fail closed).
 
-# The only agent allowed to submit proposals to the Gateway.
+# The only agent allowed to submit proposals to the Gateway, unless an action below names its own.
 proposers: [a3_incident_commander]
 
 agents:
@@ -13,6 +13,9 @@ agents:
     allowed_actions: [create_mission, update_mission, cancel_mission, reroute_group, close_major_route]
   a9_comms:
     allowed_actions: [publish_alert, publish_sitrep, cancel_alert]
+  # Changes which model version is live. This is the Gateway's executor, not an agent: A10 can only ask.
+  model_registry:
+    allowed_actions: [promote_model, rollback_model]
 
 actions:
   reroute_group:     { consequence: low }
@@ -25,6 +28,9 @@ actions:
   publish_alert:     { consequence: high, when: { unless_local_advisory: [avoid_area] } }
   cancel_alert:      { consequence: high }
   close_major_route: { consequence: high }
+  # Always a human, with no `when` to narrow it. Only A10 may ask, and A10 may ask for nothing else.
+  promote_model:     { consequence: high, proposers: [a10_data_learning] }
+  rollback_model:    { consequence: high, proposers: [a10_data_learning] }
 
 gateway:
   max_retries: 3

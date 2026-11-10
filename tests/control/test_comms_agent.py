@@ -178,4 +178,6 @@ async def test_sitrep_counts_the_situation_in_three_languages(control):
 
 def test_comms_is_not_a_bus_subscriber_so_nothing_can_bypass_the_gateway(control):
     assert Comms.subscribes_to == () and control.dispatch.subscribes_to == ()
-    assert json.dumps(sorted(control.gateway.executors)) == '["a8_dispatch", "a9_comms"]'
+    assert json.dumps(sorted(control.gateway.executors)) == (
+        '["a8_dispatch", "a9_comms", "model_registry"]'
+    )

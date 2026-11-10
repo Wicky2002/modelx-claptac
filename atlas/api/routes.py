@@ -75,6 +75,8 @@ def _incident_ids(control) -> dict[str, dict]:
         item["events"] += 1
         item["last_seen"] = event["created_at"]
     for entry in control.gateway.list_actions():  # incidents known only from actions
+        if entry["action"]["executor"] == "model_registry":
+            continue  # a model promotion is not an emergency
         incidents.setdefault(
             entry["action"]["incident_id"],
             {

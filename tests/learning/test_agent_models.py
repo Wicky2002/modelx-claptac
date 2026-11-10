@@ -6,7 +6,7 @@ import pytest
 
 from atlas.core.config import SentinelConfig, Settings
 from atlas.ingest.simulator import ReplayClock, replay
-from atlas.learning import ModelSpec, ModelStatus
+from atlas.learning import ModelSpec
 from atlas.learning.contracts import (
     RADAR_FLOOD,
     RADAR_FLOOD_FEATURES,
@@ -16,6 +16,7 @@ from atlas.learning.contracts import (
 from atlas.runtime import Runtime
 from atlas.system import attach_all
 from tests.control.conftest import fast_policy
+from tests.model_helpers import promote_with_approval
 
 AREA = "ratnapura-demo-river"
 LOC = {"lat": 6.6828, "lon": 80.3992, "area_id": AREA}
@@ -33,8 +34,7 @@ def live(runtime, name, features, predictor, threshold=0.5):
             operating_threshold=threshold,
         )
     )
-    runtime.models.set_status(name, "v1", ModelStatus.SHADOW, actor="test")
-    runtime.models.set_status(name, "v1", ModelStatus.LIVE, actor="test")
+    promote_with_approval(runtime, name, "v1")
     runtime.inference.bind(name, "v1", predictor)
 
 
