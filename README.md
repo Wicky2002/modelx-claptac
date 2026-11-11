@@ -1,6 +1,6 @@
 # ATLAS — Autonomous Triage, Logical Agentic System
 
-> **Team ClapTac** · General Sir John Kotelawala Defence University
+> **Team ClapTac** · General Sir John Kotelawala Defence University & Informatics Institute of Technology
 > ModelX 2.0 · Phase 2: AI Disaster Response Coordinator
 >
 > **Try it online:** <https://huggingface.co/spaces/Wicky2002/atlas> (no sign-in, nothing to install)
