@@ -1,21 +1,21 @@
-"""The committed synthetic bench data is reproducible and exercises A1."""
+"""The committed simulated bench data is reproducible and exercises A1."""
 
 import json
 from pathlib import Path
 
-from atlas.datasets.synthetic_bench import build_scenario
+from atlas.datasets.simulated_bench import build_scenario
 from atlas.ingest.sensors import SensorReading
 from atlas.ingest.simulator import replay
 from tests.conftest import events
 
-SCENARIO = Path(__file__).resolve().parents[2] / "data/scenarios/ratnapura_synthetic_bench.json"
+SCENARIO = Path(__file__).resolve().parents[2] / "data/scenarios/ratnapura_simulated_bench.json"
 
 
-async def test_synthetic_bench_replays_water_soil_and_tilt(runtime, clock):
+async def test_simulated_bench_replays_water_soil_and_tilt(runtime, clock):
     scenario = json.loads(SCENARIO.read_text(encoding="utf-8"))
     assert scenario == build_scenario()
     assert scenario["real"] is False
-    assert scenario["recording_kind"] == "synthetic_bench"
+    assert scenario["recording_kind"] == "simulated_bench"
     assert len(scenario["events"]) == 183
 
     series = {kind: [] for kind in ("water_level", "soil_moisture", "tilt")}

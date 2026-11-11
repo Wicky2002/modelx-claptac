@@ -109,18 +109,18 @@ Keep water well away from the Pi and the breadboard. Only the waterproof JSN-SR0
 
 ## Record a real bench session for replay (H3)
 
-For a software-only rehearsal, use the committed synthetic session:
+For a software-only rehearsal, use the committed simulated session:
 
 ```bash
-python -m atlas.ingest.simulator data/scenarios/ratnapura_synthetic_bench.json
+python -m atlas.ingest.simulator data/scenarios/ratnapura_simulated_bench.json
 ```
 
 It contains two simulated nodes sampled every 10 seconds for 10 minutes. The
 water reading rises within the 0–40 cm tabletop scale, soil moisture rises as
 the probe is wetted, and tilt crosses the demo threshold only after a sustained
 board movement. A brief sub-threshold vibration is included. The generator is
-`python -m atlas.datasets.synthetic_bench --output data/scenarios/ratnapura_synthetic_bench.json`.
-The file is marked `synthetic_bench` and contains no hardware measurements; it
+`python -m atlas.datasets.simulated_bench --output data/scenarios/ratnapura_simulated_bench.json`.
+The file is marked `simulated_bench` and contains no hardware measurements; it
 cannot satisfy H3's real-recording acceptance check.
 
 On each Pi, set `recording_path: recordings/bench-node-01.jsonl` in `config.yaml`
